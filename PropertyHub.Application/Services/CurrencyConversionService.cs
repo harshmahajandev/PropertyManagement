@@ -145,7 +145,7 @@ namespace PropertyHub.Application.Services
                 FromCurrency = r.FromCurrency.ToString(),
                 ToCurrency = r.ToCurrency.ToString(),
                 ExchangeRate = r.ExchangeRate,
-                LastUpdated = r.UpdatedAt
+                LastUpdated = r.UpdatedAt ?? r.CreatedAt
             }).ToList();
         }
 

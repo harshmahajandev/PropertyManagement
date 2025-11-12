@@ -1,5 +1,6 @@
 @page "/customer/dashboard/{CustomerId:guid}"
 @using PropertyHub.Application.DTOs
+@using PropertyHub.BlazorApp.Services
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -307,12 +308,12 @@ else if (_dashboard != null)
             }
             else
             {
-                await Snackbar.Add("Failed to load dashboard", MudBlazor.Severity.Error);
+                await Snackbar.Add("Failed to load dashboard", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            await Snackbar.Add($"Error: {ex.Message}", MudBlazor.Severity.Error);
+            await Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
         finally
         {

@@ -327,7 +327,7 @@ public class CustomerPortalService
 
     // ==================== PROPERTY RECOMMENDATIONS ====================
 
-    public async Task<List<PropertyRecommendationDto>> GetPropertyRecommendationsAsync(
+    public async Task<List<DTOs.PropertyRecommendationDto>> GetPropertyRecommendationsAsync(
         Guid customerId, 
         int take = 10)
     {
@@ -339,7 +339,7 @@ public class CustomerPortalService
             .Take(take)
             .ToListAsync();
 
-        return recommendations.Select(r => new PropertyRecommendationDto
+        return recommendations.Select(r => new DTOs.PropertyRecommendationDto
         {
             Id = r.Id,
             PropertyId = r.PropertyId,

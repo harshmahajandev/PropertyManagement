@@ -477,7 +477,7 @@
         }
         else
         {
-            Snackbar.Add("Error loading leads", Severity.Error);
+            await Snackbar.Add("Error loading leads", Severity.Error);
         }
 
         _loading = false;
@@ -506,7 +506,7 @@
         }
         else
         {
-            Snackbar.Add("Error loading lead details", Severity.Error);
+            await Snackbar.Add("Error loading lead details", Severity.Error);
         }
     }
 

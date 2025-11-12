@@ -329,7 +329,7 @@
         if (_registration.PropertyTypes == null)
             _registration.PropertyTypes = new List<string>();
 
-        if ((bool)e.Value)
+        if (e.Value as bool? == true)
         {
             if (!_registration.PropertyTypes.Contains(propertyType))
                 _registration.PropertyTypes.Add(propertyType);
@@ -345,7 +345,7 @@
         if (_registration.Locations == null)
             _registration.Locations = new List<string>();
 
-        if ((bool)e.Value)
+        if (e.Value as bool? == true)
         {
             if (!_registration.Locations.Contains(location))
                 _registration.Locations.Add(location);

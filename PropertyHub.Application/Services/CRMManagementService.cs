@@ -457,7 +457,7 @@ public class CRMManagementService
     /// <summary>
     /// Get property recommendations for a lead based on budget and preferences
     /// </summary>
-    private async Task<List<PropertyRecommendationDto>> GetPropertyRecommendationsAsync(Lead lead)
+    private async Task<List<LeadPropertyRecommendationDto>> GetPropertyRecommendationsAsync(Lead lead)
     {
         try
         {
@@ -472,7 +472,7 @@ public class CRMManagementService
                 .OrderByDescending(p => 
                     _propertyService.CalculateInterestScore(p.Views, p.Inquiries, p.Tours, p.Offers))
                 .Take(5)
-                .Select(p => new PropertyRecommendationDto
+                .Select(p => new LeadPropertyRecommendationDto
                 {
                     PropertyId = p.Id,
                     PropertyTitle = p.Title,
@@ -490,7 +490,7 @@ public class CRMManagementService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating property recommendations for lead {LeadId}", lead.Id);
-            return new List<PropertyRecommendationDto>();
+            return new List<LeadPropertyRecommendationDto>();
         }
     }
 
@@ -650,11 +650,11 @@ public class LeadDto
 public class LeadDetailDto : LeadDto
 {
     public string? Notes { get; set; }
-    public List<PropertyRecommendationDto> PropertyRecommendations { get; set; } = new();
+    public List<LeadPropertyRecommendationDto> PropertyRecommendations { get; set; } = new();
     public DateTime? UpdatedAt { get; set; }
 }
 
-public class PropertyRecommendationDto
+public class LeadPropertyRecommendationDto
 {
     public Guid PropertyId { get; set; }
     public string PropertyTitle { get; set; } = string.Empty;

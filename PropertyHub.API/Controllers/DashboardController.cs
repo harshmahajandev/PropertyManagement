@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyHub.Application.Services;
+using PropertyHub.Application.DTOs;
 
 namespace PropertyHub.API.Controllers
 {

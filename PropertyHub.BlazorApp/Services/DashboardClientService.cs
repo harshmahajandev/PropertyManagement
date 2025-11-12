@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using PropertyHub.Application.Services;
+using PropertyHub.Application.DTOs;
 
 namespace PropertyHub.BlazorApp.Services
 {
