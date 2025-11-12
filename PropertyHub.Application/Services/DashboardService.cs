@@ -2,6 +2,7 @@ using PropertyHub.Core.Entities;
 using PropertyHub.Core.Interfaces;
 using PropertyHub.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using PropertyHub.Core.Enums;
 
 namespace PropertyHub.Application.Services
 {
