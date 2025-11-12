@@ -1,0 +1,206 @@
+@page "/customer/profile/{CustomerId:guid}"
+@using PropertyHub.Application.DTOs
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<PageTitle>My Profile - PropertyHub Global</PageTitle>
+
+<div class="container mt-4">
+    @if (_loading)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (_profile != null)
+    {
+        <div class="row">
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center text-white" 
+                                 style="width: 120px; height: 120px; font-size: 3rem;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="card-title">@_profile.FullName</h5>
+                            <p class="card-text text-muted">@_profile.Email</p>
+                            <span class="badge bg-info">
+                                Member since @_profile.CreatedAt.ToString("MMM yyyy")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title">Account Statistics</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-clipboard-check me-2 text-primary"></i>
+                                Total Reservations: <strong>@_profile.TotalReservations</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle me-2 text-success"></i>
+                                Active Reservations: <strong>@_profile.ActiveReservations</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-calendar-event me-2 text-info"></i>
+                                Total Bookings: <strong>@_profile.TotalBookings</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-envelope me-2 text-warning"></i>
+                                Unread Messages: <strong>@_profile.UnreadMessages</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Edit Profile
+                        </h5>
+                        
+                        <form @onsubmit="UpdateProfileAsync" class="mt-3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="fullName" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="fullName" 
+                                               @bind="_editDto.FullName" required />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phone" 
+                                               @bind="_editDto.Phone" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="nationality" class="form-label">Nationality</label>
+                                        <input type="text" class="form-control" id="nationality" 
+                                               @bind="_editDto.Nationality" />
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="company" class="form-label">Company</label>
+                                        <input type="text" class="form-control" id="company" 
+                                               @bind="_editDto.Company" />
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="requirements" class="form-label">Requirements & Preferences</label>
+                                        <textarea class="form-control" id="requirements" rows="5"
+                                                  @bind="_editDto.CustomerRequirements"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary w-100" disabled="@_saving">
+                                        @if (_saving)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            <span>Saving...</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-save me-2"></i>
+                                            <span>Save Changes</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid CustomerId { get; set; }
+
+    private CustomerProfileDto? _profile;
+    private UpdateCustomerProfileDto _editDto = new();
+    private bool _loading = true;
+    private bool _saving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfileAsync();
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        try
+        {
+            _loading = true;
+            var response = await Http.GetAsync($"/api/CustomerPortal/profile/{CustomerId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _profile = await response.Content.ReadFromJsonAsync<CustomerProfileDto>();
+                
+                // Populate edit DTO
+                _editDto.FullName = _profile!.FullName;
+                _editDto.Phone = _profile.Phone;
+                _editDto.Nationality = _profile.Nationality;
+                _editDto.Company = _profile.Company;
+                _editDto.CustomerRequirements = _profile.CustomerRequirements;
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification($"Error loading profile: {ex.Message}", "danger");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task UpdateProfileAsync()
+    {
+        try
+        {
+            _saving = true;
+            var response = await Http.PutAsJsonAsync($"/api/CustomerPortal/profile/{CustomerId}", _editDto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await ShowNotification("Profile updated successfully!", "success");
+                await LoadProfileAsync();
+            }
+            else
+            {
+                await ShowNotification("Failed to update profile", "danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification($"Error: {ex.Message}", "danger");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ShowNotification(string message, string type)
+    {
+        // Create a toast notification using JavaScript
+        await JSRuntime.InvokeVoidAsync("showToast", message, type);
+    }
+}

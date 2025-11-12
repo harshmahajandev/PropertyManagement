@@ -1,0 +1,645 @@
+@page "/properties"
+@using PropertyHub.Application.Services
+@inject PropertyClientService PropertyService
+
+<PageTitle>Property Management - PropertyHub Global</PageTitle>
+
+<div class="container-xxl mt-4">
+    <div class="d-flex align-items-center mb-4">
+        <i class="bi bi-house me-2 fs-4"></i>
+        <h4>Property Management</h4>
+    </div>
+
+    @* Search and Filter Section *@
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 col-md-4 mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search Properties" @bind="_searchTerm" @onkeyup="@(async (e) => { if (e.Key == "Enter") await LoadPropertiesAsync(); })" />
+                    </div>
+                </div>
+                
+                <div class="col-12 col-md-2 mb-3">
+                    <select class="form-select" @bind="_selectedStatus">
+                        <option value="">All Status</option>
+                        <option value="Available">Available</option>
+                        <option value="Reserved">Reserved</option>
+                        <option value="Sold">Sold</option>
+                        <option value="Maintenance">Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2 mb-3">
+                    <select class="form-select" @bind="_selectedType">
+                        <option value="">All Types</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Plot">Plot</option>
+                        <option value="Investment">Investment</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2 mb-3">
+                    <select class="form-select" @bind="_selectedSortBy">
+                        <option value="latest">Latest First</option>
+                        <option value="price_asc">Price: Low to High</option>
+                        <option value="price_desc">Price: High to Low</option>
+                        <option value="size_asc">Size: Small to Large</option>
+                        <option value="size_desc">Size: Large to Small</option>
+                        <option value="interest_desc">Most Popular</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2 mb-3">
+                    <button class="btn btn-primary w-100" @onclick="@(() => _showAdvancedFilters = !_showAdvancedFilters)">
+                        <i class="bi bi-funnel me-1"></i> Filters
+                    </button>
+                </div>
+            </div>
+
+            @* Advanced Filters *@
+            @if (_showAdvancedFilters)
+            {
+                <hr class="my-4" />
+                <div class="row">
+                    <div class="col-12 col-md-3 mb-3">
+                        <input type="text" class="form-control" placeholder="Project Name" @bind="_filters.Project" />
+                    </div>
+                    <div class="col-12 col-md-3 mb-3">
+                        <input type="text" class="form-control" placeholder="Location" @bind="_filters.Location" />
+                    </div>
+                    <div class="col-6 col-md-1.5 mb-3">
+                        <input type="number" class="form-control" placeholder="Bedrooms" @bind="_filters.Bedrooms" min="0" />
+                    </div>
+                    <div class="col-6 col-md-1.5 mb-3">
+                        <input type="number" class="form-control" placeholder="Bathrooms" @bind="_filters.Bathrooms" min="0" />
+                    </div>
+                    <div class="col-6 col-md-1.5 mb-3">
+                        <input type="number" class="form-control" placeholder="Min Price" @bind="_filters.MinPrice" min="0" />
+                    </div>
+                    <div class="col-6 col-md-1.5 mb-3">
+                        <input type="number" class="form-control" placeholder="Max Price" @bind="_filters.MaxPrice" min="0" />
+                    </div>
+                </div>
+            }
+
+            <div class="row mt-3">
+                <div class="col-12 d-flex justify-content-end">
+                    <button class="btn btn-outline-secondary me-2" @onclick="ClearFilters">
+                        <i class="bi bi-x-circle me-1"></i> Clear
+                    </button>
+                    <button class="btn btn-primary" @onclick="LoadPropertiesAsync">
+                        <i class="bi bi-search me-1"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Statistics Bar *@
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 col-sm-3 mb-2">
+                    <small class="text-muted">Total Properties</small>
+                    <div class="fs-5 fw-bold">@_totalCount</div>
+                </div>
+                <div class="col-12 col-sm-3 mb-2">
+                    <small class="text-muted">Current Page</small>
+                    <div class="fs-5 fw-bold">@_currentPage of @_totalPages</div>
+                </div>
+                <div class="col-12 col-sm-3 mb-2">
+                    <small class="text-muted">View Mode</small>
+                    <div>
+                        <button class="btn btn-sm @(_isGridView ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => _isGridView = true)">
+                            <i class="bi bi-grid"></i> Grid
+                        </button>
+                        <button class="btn btn-sm @(!_isGridView ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => _isGridView = false)">
+                            <i class="bi bi-list"></i> List
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-3 mb-2 d-flex justify-content-end align-items-end">
+                    <button class="btn btn-success" @onclick="OpenCreateDialog">
+                        <i class="bi bi-plus-circle me-1"></i> Add Property
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Loading State *@
+    @if (_loading)
+    {
+        <div class="progress mb-4" style="height: 4px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+        </div>
+    }
+
+    @* Property Grid/List *@
+    @if (_properties != null && _properties.Any())
+    {
+        @if (_isGridView)
+        {
+            <div class="row">
+                @foreach (var property in _properties)
+                {
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                        <div class="card h-100 shadow-sm property-card" style="cursor: pointer;" @onclick="@(() => OpenPropertyDetails(property.Id))">
+                            @* Property Image *@
+                            <img src="@GetPropertyImage(property.Images)" class="card-img-top" style="height: 200px; object-fit: cover;" alt="Property Image" />
+                            
+                            @* Status Badge *@
+                            <span class="position-absolute top-0 end-0 m-2 badge @GetStatusBadgeClass(property.Status)">
+                                @property.Status
+                            </span>
+
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title mb-2">@property.Title</h6>
+                                <div class="text-muted small mb-2">
+                                    <i class="bi bi-geo-alt me-1"></i> @property.Location
+                                </div>
+                                <div class="text-primary fw-bold mb-3">
+                                    @property.Currency @property.Price.ToString("N0")
+                                </div>
+
+                                <div class="row text-center small mb-2">
+                                    <div class="col-4">
+                                        <i class="bi bi-bed me-1"></i> @property.Bedrooms BR
+                                    </div>
+                                    <div class="col-4">
+                                        <i class="bi bi-bath me-1"></i> @property.Bathrooms BA
+                                    </div>
+                                    <div class="col-4">
+                                        <i class="bi bi-rulers me-1"></i> @property.Size.ToString("N0") sqm
+                                    </div>
+                                </div>
+
+                                @* Performance Indicators *@
+                                <hr class="my-2" />
+                                <div class="row text-center small text-muted">
+                                    <div class="col-6">
+                                        <i class="bi bi-eye me-1"></i> @property.Views views
+                                    </div>
+                                    <div class="col-6">
+                                        <i class="bi bi-graph-up me-1"></i> Score: @property.InterestScore.ToString("N0")
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer bg-transparent border-top-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-primary btn-sm" @onclick="@((e) => { e.StopPropagation(); OpenPropertyDetails(property.Id); })">
+                                        View Details
+                                    </button>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">Edit Property</a></li>
+                                            <li><a class="dropdown-item" href="#">Mark as Sold</a></li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            @* List View *@
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Price</th>
+                            <th>Size</th>
+                            <th>Beds/Baths</th>
+                            <th>Performance</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var property in _properties)
+                        {
+                            <tr @onclick="@(() => OpenPropertyDetails(property.Id))" style="cursor: pointer;">
+                                <td>
+                                    <div class="fw-bold">@property.Title</div>
+                                    <small class="text-muted">@property.Location</small>
+                                </td>
+                                <td>@property.Type</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(property.Status)">@property.Status</span>
+                                </td>
+                                <td>@property.Currency @property.Price.ToString("N0")</td>
+                                <td>@property.Size.ToString("N0") sqm</td>
+                                <td>@property.Bedrooms / @property.Bathrooms</td>
+                                <td>
+                                    <small>@property.Views views</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => { e.StopPropagation(); OpenPropertyDetails(property.Id); })">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* Pagination *@
+        <div class="card mt-4">
+            <div class="card-body">
+                <nav aria-label="Property pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" @onclick="@(() => OnPageChanged(1))" disabled="@(_currentPage == 1)">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </button>
+                        </li>
+                        <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" @onclick="@(() => OnPageChanged(_currentPage - 1))" disabled="@(_currentPage == 1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        </li>
+                        
+                        @for (int i = Math.Max(1, _currentPage - 2); i <= Math.Min(_totalPages, _currentPage + 2); i++)
+                        {
+                            <li class="page-item @(i == _currentPage ? "active" : "")">
+                                <button class="page-link" @onclick="@(() => OnPageChanged(i))">@i</button>
+                            </li>
+                        }
+                        
+                        <li class="page-item @(_currentPage == _totalPages ? "disabled" : "")">
+                            <button class="page-link" @onclick="@(() => OnPageChanged(_currentPage + 1))" disabled="@(_currentPage == _totalPages)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </li>
+                        <li class="page-item @(_currentPage == _totalPages ? "disabled" : "")">
+                            <button class="page-link" @onclick="@(() => OnPageChanged(_totalPages))" disabled="@(_currentPage == _totalPages)">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="text-center mt-2">
+                    <small class="text-muted">Page @_currentPage of @_totalPages (@_totalCount total properties)</small>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!_loading)
+    {
+        <div class="card text-center">
+            <div class="card-body py-5">
+                <i class="bi bi-search fs-1 text-muted mb-3"></i>
+                <h5 class="text-muted">No properties found</h5>
+                <p class="text-muted">Try adjusting your filters</p>
+            </div>
+        </div>
+    }
+</div>
+
+@* Property Details Modal *@
+@if (_showDetailsDialog)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" aria-labelledby="propertyDetailsModal" aria-hidden="false">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Property Details</h5>
+                    <button type="button" class="btn-close" @onclick="@(() => _showDetailsDialog = false)"></button>
+                </div>
+                <div class="modal-body">
+                    @if (_selectedProperty != null)
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                @* Image Carousel *@
+                                <div id="propertyCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                                    <div class="carousel-indicators">
+                                        @for (int i = 0; i < GetPropertyImages(_selectedProperty.Images).Count; i++)
+                                        {
+                                            <button type="button" data-bs-target="#propertyCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")"></button>
+                                        }
+                                    </div>
+                                    <div class="carousel-inner">
+                                        @foreach (var (image, index) in GetPropertyImages(_selectedProperty.Images).Select((img, i) => (img, i)))
+                                        {
+                                            <div class="carousel-item @(index == 0 ? "active" : "")">
+                                                <img src="@image" class="d-block w-100" style="height: 300px; object-fit: cover;" alt="Property Image" />
+                                            </div>
+                                        }
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon"></span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <h4 class="mb-2">@_selectedProperty.Title</h4>
+                                <div class="mb-3">
+                                    <span class="badge @GetStatusBadgeClass(_selectedProperty.Status) me-2">@_selectedProperty.Status</span>
+                                    <span class="badge bg-secondary">@_selectedProperty.Type</span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <h3 class="text-primary mb-4">@_selectedProperty.Currency @_selectedProperty.Price.ToString("N0")</h3>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-3"><strong>Property Details</strong></h6>
+                                        <div class="mb-2">
+                                            <i class="bi bi-geo-alt me-2"></i> @_selectedProperty.Location
+                                        </div>
+                                        <div class="mb-2">
+                                            <i class="bi bi-building me-2"></i> Project: @_selectedProperty.Project
+                                        </div>
+                                        <div class="mb-2">
+                                            <i class="bi bi-rulers me-2"></i> Size: @_selectedProperty.Size sqm
+                                        </div>
+                                        <div class="mb-2">
+                                            <i class="bi bi-bed me-2"></i> Bedrooms: @_selectedProperty.Bedrooms
+                                        </div>
+                                        <div class="mb-2">
+                                            <i class="bi bi-bath me-2"></i> Bathrooms: @_selectedProperty.Bathrooms
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-3"><strong>Performance</strong></h6>
+                                        <div class="mb-2">Views: @_selectedProperty.Performance.Views</div>
+                                        <div class="mb-2">Inquiries: @_selectedProperty.Performance.Inquiries</div>
+                                        <div class="mb-2">Tours: @_selectedProperty.Performance.Tours</div>
+                                        <div class="mb-2">Offers: @_selectedProperty.Performance.Offers</div>
+                                        <div class="mb-2 text-primary">
+                                            <strong>Interest Score: @_selectedProperty.Performance.InterestScore.ToString("N0")</strong>
+                                        </div>
+                                        <div class="text-success">
+                                            <strong>Conversion Rate: @_selectedProperty.Performance.ConversionRate.ToString("N1")%</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-3"><strong>Lead Matching</strong></h6>
+                                        <div class="row">
+                                            <div class="col-6 col-sm-3 text-center">
+                                                <div class="text-muted small">Total Matches</div>
+                                                <div class="fs-5 fw-bold">@_selectedProperty.LeadMatches.TotalMatches</div>
+                                            </div>
+                                            <div class="col-6 col-sm-3 text-center">
+                                                <div class="text-muted small">HNI Leads</div>
+                                                <div class="fs-5 fw-bold text-success">@_selectedProperty.LeadMatches.HNILeads</div>
+                                            </div>
+                                            <div class="col-6 col-sm-3 text-center">
+                                                <div class="text-muted small">Investor Leads</div>
+                                                <div class="fs-5 fw-bold text-info">@_selectedProperty.LeadMatches.InvestorLeads</div>
+                                            </div>
+                                            <div class="col-6 col-sm-3 text-center">
+                                                <div class="text-muted small">Retail Leads</div>
+                                                <div class="fs-5 fw-bold">@_selectedProperty.LeadMatches.RetailLeads</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(_selectedProperty.Description))
+                            {
+                                <div class="col-12">
+                                    <h6 class="mb-2"><strong>Description</strong></h6>
+                                    <p>@_selectedProperty.Description</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" @onclick="@(() => RecordInquiry(_selectedProperty!.Id))">
+                        <i class="bi bi-envelope me-1"></i> Record Inquiry
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="@(() => RecordTour(_selectedProperty!.Id))">
+                        <i class="bi bi-map me-1"></i> Record Tour
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="@(() => RecordOffer(_selectedProperty!.Id))">
+                        <i class="bi bi-tag me-1"></i> Record Offer
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="@(() => _showDetailsDialog = false)">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    // State
+    private bool _loading = true;
+    private List<PropertyDto>? _properties;
+    private PropertyDetailDto? _selectedProperty;
+    private PropertyFilterOptions _filters = new();
+    private int _totalCount;
+    private int _currentPage = 1;
+    private int _totalPages;
+    private int _pageSize = 12;
+    
+    // UI State
+    private bool _showAdvancedFilters = false;
+    private bool _showDetailsDialog = false;
+    private bool _isGridView = true;
+    private string? _searchTerm;
+    private string? _selectedStatus;
+    private string? _selectedType;
+    private string _selectedSortBy = "latest";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPropertiesAsync();
+    }
+
+    private async Task LoadPropertiesAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        _filters.SearchTerm = _searchTerm;
+        _filters.Status = _selectedStatus;
+        _filters.Type = _selectedType;
+        _filters.SortBy = _selectedSortBy;
+        _filters.Limit = _pageSize;
+        _filters.Offset = (_currentPage - 1) * _pageSize;
+
+        var result = await PropertyService.GetPropertiesAsync(_filters);
+        
+        if (result != null)
+        {
+            _properties = result.Properties;
+            _totalCount = result.Total;
+            _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize);
+        }
+        else
+        {
+            // TODO: Replace with appropriate Bootstrap alert or toast notification
+            Console.WriteLine("Error loading properties");
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        _currentPage = page;
+        await LoadPropertiesAsync();
+    }
+
+    private async void ClearFilters()
+    {
+        _filters = new();
+        _searchTerm = null;
+        _selectedStatus = null;
+        _selectedType = null;
+        _selectedSortBy = "latest";
+        _currentPage = 1;
+        await LoadPropertiesAsync();
+    }
+
+    private async void OpenPropertyDetails(Guid propertyId)
+    {
+        var property = await PropertyService.GetPropertyByIdAsync(propertyId);
+        if (property != null)
+        {
+            _selectedProperty = property;
+            _showDetailsDialog = true;
+            StateHasChanged();
+        }
+        else
+        {
+            // TODO: Replace with appropriate Bootstrap alert or toast notification
+            Console.WriteLine("Error loading property details");
+        }
+    }
+
+    private void OpenCreateDialog()
+    {
+        // TODO: Replace with appropriate Bootstrap alert or toast notification
+        Console.WriteLine("Create property feature coming soon!");
+    }
+
+    private async Task RecordInquiry(Guid propertyId)
+    {
+        var success = await PropertyService.RecordInquiryAsync(propertyId);
+        if (success)
+        {
+            // TODO: Replace with appropriate Bootstrap alert or toast notification
+            Console.WriteLine("Inquiry recorded successfully");
+            if (_selectedProperty != null)
+            {
+                _selectedProperty.Performance.Inquiries++;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task RecordTour(Guid propertyId)
+    {
+        var success = await PropertyService.RecordTourAsync(propertyId);
+        if (success)
+        {
+            // TODO: Replace with appropriate Bootstrap alert or toast notification
+            Console.WriteLine("Tour recorded successfully");
+            if (_selectedProperty != null)
+            {
+                _selectedProperty.Performance.Tours++;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task RecordOffer(Guid propertyId)
+    {
+        var success = await PropertyService.RecordOfferAsync(propertyId);
+        if (success)
+        {
+            // TODO: Replace with appropriate Bootstrap alert or toast notification
+            Console.WriteLine("Offer recorded successfully");
+            if (_selectedProperty != null)
+            {
+                _selectedProperty.Performance.Offers++;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private string GetPropertyImage(string? images)
+    {
+        if (string.IsNullOrEmpty(images))
+            return "https://via.placeholder.com/400x300?text=No+Image";
+
+        try
+        {
+            var imageArray = System.Text.Json.JsonSerializer.Deserialize<string[]>(images);
+            return imageArray?.FirstOrDefault() ?? "https://via.placeholder.com/400x300?text=No+Image";
+        }
+        catch
+        {
+            return images.Contains("http") ? images : "https://via.placeholder.com/400x300?text=No+Image";
+        }
+    }
+
+    private List<string> GetPropertyImages(string? images)
+    {
+        if (string.IsNullOrEmpty(images))
+            return new List<string> { "https://via.placeholder.com/800x400?text=No+Image" };
+
+        try
+        {
+            var imageArray = System.Text.Json.JsonSerializer.Deserialize<string[]>(images);
+            return imageArray?.ToList() ?? new List<string> { "https://via.placeholder.com/800x400?text=No+Image" };
+        }
+        catch
+        {
+            return new List<string> { images.Contains("http") ? images : "https://via.placeholder.com/800x400?text=No+Image" };
+        }
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "badge-available",
+            "Reserved" => "badge-reserved",
+            "Sold" => "badge-sold",
+            "Maintenance" => "badge-maintenance",
+            _ => "bg-secondary"
+        };
+    }
+}

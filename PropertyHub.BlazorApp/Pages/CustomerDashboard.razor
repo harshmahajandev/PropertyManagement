@@ -1,0 +1,333 @@
+@page "/customer/dashboard/{CustomerId:guid}"
+@using PropertyHub.Application.DTOs
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>My Dashboard - PropertyHub Global</PageTitle>
+
+@if (_loading)
+{
+    <div class="container">
+        <div class="d-flex justify-content-center align-items" style="height: 400px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+}
+else if (_dashboard != null)
+{
+    <div class="container">
+        
+        @* Welcome Header *@
+        <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-hand-paper me-2"></i>Welcome back, @_dashboard.Profile.FullName!
+                        </h4>
+                        <p class="card-text mt-2">
+                            Here's what's happening with your properties today.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
+                        <a class="btn btn-light" href="@($"/customer/profile/{CustomerId}")">
+                            <i class="fas fa-user me-2"></i>My Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Statistics Cards *@
+        <div class="row mb-4">
+            <div class="col-12 col-sm-6 col-md-3 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted mb-1">Total Reservations</p>
+                                <h4 class="mb-0">@_dashboard.Statistics.TotalReservations</h4>
+                            </div>
+                            <i class="fas fa-clipboard-list text-primary fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted mb-1">Active Reservations</p>
+                                <h4 class="text-success mb-0">@_dashboard.Statistics.ActiveReservations</h4>
+                            </div>
+                            <i class="fas fa-check-circle text-success fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted mb-1">Total Bookings</p>
+                                <h4 class="mb-0">@_dashboard.Statistics.TotalBookings</h4>
+                            </div>
+                            <i class="fas fa-calendar-alt text-info fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted mb-1">Unread Messages</p>
+                                <h4 class="text-warning mb-0">@_dashboard.Statistics.UnreadMessages</h4>
+                            </div>
+                            <i class="fas fa-envelope text-warning fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Quick Actions *@
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <h6 class="card-title mb-3">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-primary" href="@($"/customer/properties/{CustomerId}")">
+                        <i class="fas fa-search me-2"></i>Browse Properties
+                    </a>
+                    <a class="btn btn-secondary" href="@($"/customer/messages/{CustomerId}")">
+                        <i class="fas fa-message me-2"></i>My Messages (@_dashboard.Statistics.UnreadMessages)
+                    </a>
+                    <a class="btn btn-outline-info" href="@($"/customer/bookings/{CustomerId}")">
+                        <i class="fas fa-calendar me-2"></i>My Bookings
+                    </a>
+                    <a class="btn btn-outline-dark" href="@($"/customer/preferences/{CustomerId}")">
+                        <i class="fas fa-cog me-2"></i>Update Preferences
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @* Property Recommendations *@
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-star me-2"></i>Recommended For You
+                    </h6>
+                    <a class="btn btn-link text-decoration-none" href="@($"/customer/properties/{CustomerId}")">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                @if (_dashboard.RecommendedProperties.Any())
+                {
+                    <div class="row">
+                        @foreach (var property in _dashboard.RecommendedProperties)
+                        {
+                            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100 shadow-sm">
+                                    <img src="@(property.Images.FirstOrDefault() ?? "/images/placeholder.jpg")" 
+                                         class="card-img-top" style="height: 200px; object-fit: cover;" alt="Property">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0">@property.PropertyTitle</h6>
+                                            <span class="badge bg-success">@property.ConfidenceScore% Match</span>
+                                        </div>
+                                        
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-map-marker-alt me-1"></i>@property.Location
+                                        </p>
+                                        
+                                        <h5 class="text-primary mb-2">@property.Price.ToString("N0") @property.Currency</h5>
+                                        
+                                        <div class="d-flex flex-wrap gap-1 mb-2">
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-bed me-1"></i>@property.Bedrooms BR
+                                            </span>
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-bath me-1"></i>@property.Bathrooms BA
+                                            </span>
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-ruler me-1"></i>@property.Size.ToString("N0") sqm
+                                            </span>
+                                        </div>
+
+                                        @if (property.MatchReasons.Any())
+                                        {
+                                            <p class="text-info mb-0">
+                                                <i class="fas fa-info-circle me-1"></i>@property.MatchReasons.FirstOrDefault()
+                                            </p>
+                                        }
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <button class="btn btn-primary w-100">View Details</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Update your preferences to get personalized property recommendations!
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Recent Activity *@
+        <div class="row">
+            @* Recent Bookings *@
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-calendar me-2"></i>Recent Bookings
+                            </h6>
+                            <a class="btn btn-link btn-sm text-decoration-none" href="@($"/customer/bookings/{CustomerId}")">
+                                View All <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+
+                        @if (_dashboard.RecentBookings.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var booking in _dashboard.RecentBookings)
+                                {
+                                    <div class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">@booking.PropertyTitle</h6>
+                                                <small class="text-muted">@booking.VisitDate.ToString("MMM dd, yyyy")</small>
+                                            </div>
+                                            <span class="badge @GetBookingStatusBadgeClass(booking.Status)">@booking.Status</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">No bookings yet</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* Recent Messages *@
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-message me-2"></i>Recent Messages
+                            </h6>
+                            <a class="btn btn-link btn-sm text-decoration-none" href="@($"/customer/messages/{CustomerId}")">
+                                View All <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+
+                        @if (_dashboard.RecentMessages.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var message in _dashboard.RecentMessages)
+                                {
+                                    <div class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <h6 class="mb-0 me-2">@message.FromUserName</h6>
+                                                    @if (!message.Read)
+                                                    {
+                                                        <span class="badge bg-danger">New</span>
+                                                    }
+                                                </div>
+                                                <p class="text-muted mb-1">@message.Subject</p>
+                                                <small class="text-muted">@message.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                            </div>
+                                            <button class="btn btn-link btn-sm">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">No messages yet</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter] public Guid CustomerId { get; set; }
+
+    private CustomerDashboardDto? _dashboard;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        try
+        {
+            _loading = true;
+            var response = await Http.GetAsync($"/api/CustomerPortal/dashboard/{CustomerId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _dashboard = await response.Content.ReadFromJsonAsync<CustomerDashboardDto>();
+            }
+            else
+            {
+                await Snackbar.Add("Failed to load dashboard", MudBlazor.Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await Snackbar.Add($"Error: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string GetBookingStatusBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "confirmed" => "bg-success",
+            "pending" => "bg-warning text-dark",
+            "cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

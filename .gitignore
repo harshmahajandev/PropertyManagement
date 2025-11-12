@@ -1,0 +1,246 @@
+# ===========================
+# PropertyHub Global .gitignore
+# ===========================
+
+# ===========================
+# ASP.NET Core / .NET
+# ===========================
+
+# User-specific files
+*.user
+*.userprefs
+*.suo
+*.user
+*.snk
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUNIT
+*.VisualState.xml
+TestResult.xml
+*.nunit
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+*~
+
+# VS Code
+.vscode/
+
+# Rider
+.idea/
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Generated files
+bin/Debug/
+obj/Debug/
+
+# ===========================
+# Angular / TypeScript / Node.js
+# ===========================
+
+# Angular
+/dist/
+/tmp/
+/out-tsc/
+/bazel-out
+
+# Angular CLI
+.angular/
+
+# IDE
+.idea/
+*.iml
+*.swp
+*.swo
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnp
+.pnp.js
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+/coverage/
+*.lcov
+.nyc_output
+
+# ===========================
+# Configuration & Secrets
+# ===========================
+
+# Configuration files with secrets
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.*.json
+!appsettings.json
+!appsettings.template.json
+**/appsettings.secret.json
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API Keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
+config/secrets.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+.mdf
+*.ldf
+
+# ===========================
+# General
+# ===========================
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+Log/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~.nib
+*.tmp
+
+# Package managers
+/packages/
+.npm
+.yarn/
+.bower/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# ===========================
+# PropertyHub Specific
+# ===========================
+
+# Uploaded files and media
+/uploads/
+/media/
+/images/properties/*
+!/images/properties/sample/
+
+# Generated documentation
+/docs/generated/
+/documentation/build/
+
+# Build artifacts
+propertyhub.*.zip
+PropertyHub.*.zip
+
+# Database migrations (keep structure, exclude data)
+*.backup
+*.dump
+
+# ===========================
+# Third-party Tools
+# ===========================
+
+# Azure
+.azure/
+
+# AWS
+.aws/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ===========================
+# Exclude specific files that might contain sensitive data
+# ===========================
+
+# Web API specific
+**/wwwroot/uploads/*
+!**/wwwroot/uploads/.gitkeep
+**/Data/Migrations/*
+!**/Data/Migrations/*.cs
+
+# Angular specific  
+src/environments/environment.prod.ts
+src/environments/environment.development.ts
+
+# Certificate files
+*.p12
+*.pfx
+*.cer
+*.crt
+*.pem
+
+# Password files
+*.pwd
+*.password
+secrets.json
+credentials.json

@@ -1,0 +1,190 @@
+@inherits LayoutComponentBase
+
+<div class="wrapper">
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <span class="navbar-brand mb-0 h1">PropertyHub Global</span>
+            
+            <div class="navbar-nav ms-auto">
+                <button class="btn btn-link text-white" @onclick="ToggleSidebar">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="btn btn-link text-white" @onclick="ToggleSidebar">
+                    <i class="fas fa-user-circle"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="sidebar @(sidebarOpen ? "sidebar-open" : "sidebar-closed")">
+        <div class="sidebar-header">
+            <h5 class="text-center">Navigation</h5>
+        </div>
+        <ul class="list-unstyled">
+            <li>
+                <a href="/" class="@(IsCurrentPage("/") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="/customer/properties" class="@(IsCurrentPage("/customer/properties") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-home me-2"></i>Properties
+                </a>
+            </li>
+            <li>
+                <a href="/customer/dashboard" class="@(IsCurrentPage("/customer/dashboard") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-user me-2"></i>My Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="/crm" class="@(IsCurrentPage("/crm") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-users me-2"></i>CRM & Leads
+                </a>
+            </li>
+            <li>
+                <a href="/reservations" class="@(IsCurrentPage("/reservations") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-bookmark me-2"></i>Reservations
+                </a>
+            </li>
+            <li>
+                <a href="/analytics" class="@(IsCurrentPage("/analytics") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-chart-bar me-2"></i>Analytics
+                </a>
+            </li>
+            <li>
+                <a href="/snagging" class="@(IsCurrentPage("/snagging") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-bug me-2"></i>Snagging
+                </a>
+            </li>
+            <li>
+                <a href="/reports" class="@(IsCurrentPage("/reports") ? "nav-link active" : "nav-link")" @onclick="RefreshNav">
+                    <i class="fas fa-file-alt me-2"></i>Financial Reports
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content @(sidebarOpen ? "main-content-open" : "main-content-closed")">
+        <div class="container-fluid mt-4 pt-4">
+            @Body
+        </div>
+    </main>
+</div>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .wrapper {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 56px;
+        left: 0;
+        width: 250px;
+        height: calc(100vh - 56px);
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        padding: 20px 0;
+        transition: all 0.3s;
+        z-index: 1000;
+    }
+
+    .sidebar-closed {
+        transform: translateX(-250px);
+    }
+
+    .sidebar-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-header {
+        padding: 0 20px 20px;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+
+    .sidebar .nav-link {
+        color: #6c757d;
+        padding: 12px 20px;
+        text-decoration: none;
+        display: block;
+        transition: all 0.3s;
+    }
+
+    .sidebar .nav-link:hover {
+        color: #007bff;
+        background-color: #e9ecef;
+    }
+
+    .sidebar .nav-link.active {
+        color: #007bff;
+        background-color: #e7f1ff;
+        border-right: 3px solid #007bff;
+    }
+
+    .main-content {
+        flex: 1;
+        margin-left: 250px;
+        margin-top: 56px;
+        padding: 0;
+        transition: all 0.3s;
+        min-height: calc(100vh - 56px);
+    }
+
+    .main-content-closed {
+        margin-left: 0;
+    }
+
+    .main-content-open {
+        margin-left: 250px;
+    }
+
+    /* Mobile responsiveness */
+    @@media (max-width: 768px) {
+        .sidebar {
+            width: 250px;
+        }
+        
+        .main-content {
+            margin-left: 0;
+        }
+    }
+</style>
+
+@code {
+    private bool sidebarOpen = true;
+
+    private void ToggleSidebar()
+    {
+        sidebarOpen = !sidebarOpen;
+    }
+
+    private void RefreshNav()
+    {
+        // This will be called to refresh navigation state if needed
+        StateHasChanged();
+    }
+
+    private bool IsCurrentPage(string path)
+    {
+        // This is a simplified check - in a real app you might want to use 
+        // NavigationManager to get the current page
+        return true; // Default to true for now
+    }
+}

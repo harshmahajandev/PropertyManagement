@@ -1,0 +1,287 @@
+@page "/customer/messages/{CustomerId:guid}"
+@using PropertyHub.Application.DTOs
+@using PropertyHub.Core.Enums
+@inject HttpClient Http
+// Bootstrap notification system injected
+
+<PageTitle>My Messages - PropertyHub Global</PageTitle>
+
+<div class="container mt-4">
+    <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4>
+                    <i class="bi bi-envelope me-2"></i>
+                    Communication Center
+                </h4>
+                <p class="text-muted">
+                    @_messages.Count messages • @_messages.Count(m => !m.Read) unread
+                </p>
+            </div>
+            <button class="btn btn-primary" @onclick="() => _showComposeDialog = true">
+                <i class="bi bi-plus me-2"></i>New Message
+            </button>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (_messages.Any())
+    {
+        <div class="list-group">
+            @foreach (var message in _messages)
+            {
+                <div class="list-group-item list-group-item-action p-3 mb-2 @(message.Read ? "" : "border-start border-primary border-4")" @onclick="() => ViewMessage(message)" style="cursor: pointer;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="@GetMessageIcon(message.MessageType) text-primary me-2"></i>
+                                <h6 class="mb-0">
+                                    <strong>@(message.FromUserId == CustomerId ? "To: " + message.ToUserName : message.FromUserName)</strong>
+                                </h6>
+                                @if (!message.Read)
+                                {
+                                    <span class="badge bg-danger ms-2">New</span>
+                                }
+                                <span class="badge bg-@GetPriorityBadgeColor(message.Priority) ms-2 border">@message.Priority</span>
+                                <span class="badge bg-secondary ms-2">@message.MessageType</span>
+                            </div>
+                            
+                            <h6 class="mb-1">@message.Subject</h6>
+                            <p class="mb-1 text-muted" style="max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                @message.Content
+                            </p>
+                            <small class="text-muted">
+                                @message.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            </small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h6 class="alert-heading">No messages yet</h6>
+            <p>Start a conversation with our agents!</p>
+        </div>
+    }
+</div>
+
+@* Message View Modal *@
+@if (_showViewDialog && _selectedMessage != null)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" aria-hidden="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="@GetMessageIcon(_selectedMessage.MessageType) me-2"></i>
+                        @_selectedMessage.Subject
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="() => _showViewDialog = false" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <p class="mb-1"><strong>From:</strong> @_selectedMessage.FromUserName</p>
+                        <p class="mb-1"><strong>To:</strong> @_selectedMessage.ToUserName</p>
+                        <p class="mb-2"><strong>Date:</strong> @_selectedMessage.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</p>
+                        <div class="mt-2">
+                            <span class="badge bg-@GetPriorityBadgeColor(_selectedMessage.Priority) me-1">@_selectedMessage.Priority Priority</span>
+                            <span class="badge bg-secondary">@_selectedMessage.MessageType</span>
+                        </div>
+                    </div>
+                    
+                    <p style="white-space: pre-wrap;">@_selectedMessage.Content</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => _showViewDialog = false">Close</button>
+                    <button type="button" class="btn btn-primary">
+                        <i class="bi bi-reply me-2"></i>Reply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@* Compose Message Modal *@
+@if (_showComposeDialog)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" aria-hidden="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil me-2"></i>
+                        New Message
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="() => _showComposeDialog = false" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input id="subject" type="text" class="form-control" @bind="_newMessage.Subject" required />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Type</label>
+                        <select id="type" class="form-select" @bind="_newMessage.MessageType">
+                            <option value="@MessageType.Inquiry">Inquiry</option>
+                            <option value="@MessageType.Booking">Booking</option>
+                            <option value="@MessageType.General">General</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select id="priority" class="form-select" @bind="_newMessage.Priority">
+                            <option value="@Priority.Low">Low</option>
+                            <option value="@Priority.Medium">Medium</option>
+                            <option value="@Priority.High">High</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Message</label>
+                        <textarea id="content" class="form-control" rows="8" @bind="_newMessage.Content" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => _showComposeDialog = false">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SendMessageAsync" disabled="@_sending">
+                        @if (_sending)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-send me-2"></i>
+                        }
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public Guid CustomerId { get; set; }
+
+    private List<CustomerMessageDto> _messages = new();
+    private CustomerMessageDto? _selectedMessage;
+    private SendCustomerMessageDto _newMessage = new();
+    private bool _loading = true;
+    private bool _sending = false;
+    private bool _showViewDialog = false;
+    private bool _showComposeDialog = false;
+    // Bootstrap modal options removed
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMessagesAsync();
+    }
+
+    private async Task LoadMessagesAsync()
+    {
+        try
+        {
+            _loading = true;
+            var response = await Http.GetAsync($"/api/CustomerPortal/messages/{CustomerId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _messages = await response.Content.ReadFromJsonAsync<List<CustomerMessageDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Bootstrap toast notification: Show error toast
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ViewMessage(CustomerMessageDto message)
+    {
+        _selectedMessage = message;
+        _showViewDialog = true;
+
+        // Mark as read if unread
+        if (!message.Read && message.ToUserId == CustomerId)
+        {
+            try
+            {
+                await Http.PutAsync($"/api/CustomerPortal/messages/{message.Id}/read?customerId={CustomerId}", null);
+                message.Read = true;
+            }
+            catch { }
+        }
+    }
+
+    private async Task SendMessageAsync()
+    {
+        try
+        {
+            _sending = true;
+            // For demo, send to a system user (in production, would have recipient selection)
+            _newMessage.ToUserId = Guid.NewGuid(); // Replace with actual agent/system ID
+            
+            var response = await Http.PostAsJsonAsync($"/api/CustomerPortal/messages/{CustomerId}/send", _newMessage);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                // Bootstrap toast notification: Show success toast
+            Console.WriteLine("Message sent successfully!");
+                _showComposeDialog = false;
+                _newMessage = new();
+                await LoadMessagesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Bootstrap toast notification: Show error toast
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private string GetMessageIcon(MessageType type)
+    {
+        return type switch
+        {
+            MessageType.Inquiry => "bi bi-question-circle",
+            MessageType.Booking => "bi bi-calendar-event",
+            MessageType.Marketing => "bi bi-megaphone",
+            _ => "bi bi-envelope"
+        };
+    }
+
+    private string GetPriorityBadgeColor(Priority priority)
+    {
+        return priority switch
+        {
+            Priority.High => "danger",
+            Priority.Medium => "warning",
+            Priority.Low => "info",
+            _ => "secondary"
+        };
+    }
+}

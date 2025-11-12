@@ -1,0 +1,163 @@
+@page "/customer/properties/{CustomerId:guid}"
+@using PropertyHub.Application.DTOs
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Property Recommendations - PropertyHub Global</PageTitle>
+
+<div class="container mt-4">
+    <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4>
+                    <i class="fas fa-star text-primary me-2"></i>
+                    Properties For You
+                </h4>
+                <p class="text-muted">
+                    Based on your preferences, we found @_recommendations.Count matching properties
+                </p>
+            </div>
+            <button class="btn btn-primary" @onclick="RefreshRecommendationsAsync" disabled="@_refreshing">
+                <i class="fas fa-sync-alt @( _refreshing ? "fa-spin" : "" )"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+        </div>
+    }
+    else if (_recommendations.Any())
+    {
+        <div class="row">
+            @foreach (var property in _recommendations)
+            {
+                <div class="col-12 col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <img src="@(property.Images.FirstOrDefault() ?? "/images/placeholder.jpg")" class="card-img-top" alt="Property image" style="height: 220px; object-fit: cover;" />
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">@property.PropertyTitle</h6>
+                                <span class="badge @GetMatchBadgeClass(property.ConfidenceScore)">
+                                    @property.ConfidenceScore%
+                                </span>
+                            </div>
+                            
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-map-marker-alt"></i>
+                                @property.Location • @property.Project
+                            </p>
+                            
+                            <h5 class="text-primary mt-2 mb-2">
+                                @property.Price.ToString("N0") @property.Currency
+                            </h5>
+                            
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                <span class="badge bg-light text-dark"><i class="fas fa-bed"></i> @property.Bedrooms BR</span>
+                                <span class="badge bg-light text-dark"><i class="fas fa-bath"></i> @property.Bathrooms BA</span>
+                                <span class="badge bg-light text-dark"><i class="fas fa-ruler-combined"></i> @property.Size.ToString("N0") sqm</span>
+                            </div>
+
+                            <hr class="my-2" />
+                            
+                            <p class="text-info small mb-2">
+                                <i class="fas fa-star"></i>
+                                <strong>Why it matches:</strong>
+                            </p>
+                            @foreach (var reason in property.MatchReasons.Take(2))
+                            {
+                                <p class="text-muted small mb-1">• @reason</p>
+                            }
+                        </div>
+                        <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
+                            <button class="btn btn-link text-primary p-0 small">View Details</button>
+                            <button class="btn btn-success btn-sm">
+                                <i class="fas fa-calendar-plus"></i>
+                                Book Visit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <h6>No recommendations yet</h6>
+            <p>Update your preferences to get personalized property recommendations!</p>
+            <a href="@($"/customer/preferences/{CustomerId}")" class="btn btn-outline-secondary mt-2">
+                Update Preferences
+            </a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid CustomerId { get; set; }
+
+    private List<PropertyRecommendationDto> _recommendations = new();
+    private bool _loading = true;
+    private bool _refreshing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecommendationsAsync();
+    }
+
+    private async Task LoadRecommendationsAsync()
+    {
+        try
+        {
+            _loading = true;
+            var response = await Http.GetAsync($"/api/CustomerPortal/recommendations/{CustomerId}?take=12");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _recommendations = await response.Content.ReadFromJsonAsync<List<PropertyRecommendationDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshRecommendationsAsync()
+    {
+        try
+        {
+            _refreshing = true;
+            var response = await Http.PostAsync($"/api/CustomerPortal/recommendations/{CustomerId}/generate", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Recommendations updated!");
+                await LoadRecommendationsAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private string GetMatchBadgeClass(int score)
+    {
+        return score >= 80 ? "bg-success" :
+               score >= 60 ? "bg-info" :
+               score >= 40 ? "bg-warning" :
+               "bg-secondary";
+    }
+}

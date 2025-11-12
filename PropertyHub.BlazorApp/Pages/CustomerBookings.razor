@@ -1,0 +1,137 @@
+@page "/customer/bookings/{CustomerId:guid}"
+@using PropertyHub.Application.DTOs
+@using PropertyHub.Core.Enums
+@inject HttpClient Http
+
+<PageTitle>My Bookings - PropertyHub Global</PageTitle>
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4 p-3">
+        <h1>
+            <i class="bi bi-calendar-month me-2"></i>
+            My Bookings
+        </h1>
+        <p class="text-muted mb-0">
+            Complete history of your property viewings and reservations
+        </p>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+        </div>
+    }
+    else if (_bookings.Any())
+    {
+        <div class="timeline position-relative">
+            @foreach (var booking in _bookings)
+            {
+                <div class="timeline-item position-relative mb-4">
+                    <div class="d-flex align-items-start">
+                        <div class="timeline-date me-3 text-muted small">
+                            @booking.BookingDate.ToString("MMM dd, yyyy")
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <h5 class="mb-0 me-2">@booking.PropertyTitle</h5>
+                                                <span class="badge @GetBadgeClass(booking.Status)">@booking.Status</span>
+                                                <span class="badge text-bg-secondary">@booking.BookingType</span>
+                                            </div>
+                                            
+                                            <p class="text-muted mb-2">
+                                                <i class="bi bi-geo-alt"></i>
+                                                @booking.PropertyLocation
+                                            </p>
+                                            
+                                            <p class="mb-2">
+                                                <i class="bi bi-calendar-event"></i>
+                                                <strong>Visit Date:</strong> @booking.VisitDate.ToString("dddd, MMMM dd, yyyy")
+                                            </p>
+                                            
+                                            @if (booking.TotalAmount.HasValue)
+                                            {
+                                                <h6 class="text-primary mt-2">
+                                                    Amount: @booking.TotalAmount.Value.ToString("N0") BHD
+                                                </h6>
+                                            }
+                                        </div>
+                                        
+                                        @if (booking.PropertyImages.Any())
+                                        {
+                                            <img src="@booking.PropertyImages.First()" 
+                                                class="rounded ms-3" 
+                                                style="width: 120px; height: 120px; object-fit: cover;" 
+                                                alt="Property image" />
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h5>No bookings yet</h5>
+            <p>Start exploring properties and book your first visit!</p>
+            <a href="@($"/customer/properties/{CustomerId}")" class="btn btn-outline-secondary mt-2">
+                Browse Properties
+            </a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid CustomerId { get; set; }
+
+    private List<CustomerBookingDto> _bookings = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBookingsAsync();
+    }
+
+    private async Task LoadBookingsAsync()
+    {
+        try
+        {
+            _loading = true;
+            var response = await Http.GetAsync($"/api/CustomerPortal/bookings/{CustomerId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _bookings = await response.Content.ReadFromJsonAsync<List<CustomerBookingDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            // In Bootstrap version, you could show a toast or use JavaScript
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string GetBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "confirmed" => "text-bg-success",
+            "pending" => "text-bg-warning",
+            "cancelled" => "text-bg-danger",
+            "completed" => "text-bg-info",
+            _ => "text-bg-secondary"
+        };
+    }
+}
