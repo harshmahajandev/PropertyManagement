@@ -153,14 +153,25 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
-        // Apply migrations
-        await context.Database.MigrateAsync();
+        // Apply migrations - with error handling for existing tables
+        try
+        {
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied successfully");
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P07")
+        {
+            // Table already exists - this is okay, just log it
+            logger.LogWarning("Some database objects already exist. Continuing with existing schema. Error: {Message}", ex.Message);
+        }
         
         // Seed roles
         var roles = new[] { "Admin", "Manager", "SalesAgent", "SalesManager", "ProjectManager", "Inspector", "Accountant", "Customer", "Executive" };
