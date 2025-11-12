@@ -20,7 +20,7 @@ export class AuthService extends BaseApiService {
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
   constructor(
-    protected http: HttpClient,
+    protected override http: HttpClient,
     private router: Router
   ) {
     super(http);

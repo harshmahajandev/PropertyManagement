@@ -19,7 +19,7 @@ import {
 })
 export class CustomerPortalService extends BaseApiService {
   
-  constructor(protected http: HttpClient) {
+  constructor(protected override http: HttpClient) {
     super(http);
   }
 
@@ -38,7 +38,7 @@ export class CustomerPortalService extends BaseApiService {
   }
 
   updatePreferences(customerId: string, preferences: any): Observable<CustomerPreferencesDto> {
-    return this.put<CustomerPreferencesDto>(`customerportal/preferences`, customerId, preferences);
+    return this.put<CustomerPreferencesDto>(`customerportal/preferences/${customerId}`, '', preferences);
   }
 
   // Property Recommendations
@@ -71,7 +71,7 @@ export class CustomerPortalService extends BaseApiService {
   }
 
   markMessageAsRead(messageId: string, customerId: string): Observable<any> {
-    return this.put<any>(`customerportal/messages/${messageId}/read?customerId=${customerId}`, {});
+    return this.put<any>('customerportal/messages', `${messageId}/read?customerId=${customerId}`, {});
   }
 
   // Reservations

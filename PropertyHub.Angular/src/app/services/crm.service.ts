@@ -19,7 +19,7 @@ import {
 })
 export class CrmService extends BaseApiService {
 
-  constructor(protected http: HttpClient) {
+  constructor(protected override http: HttpClient) {
     super(http);
   }
 
@@ -29,7 +29,7 @@ export class CrmService extends BaseApiService {
   }
 
   getLeadById(id: string): Observable<Lead> {
-    return this.getById<Lead>(`crm/leads/${id}`);
+    return this.getById<Lead>('crm/leads', id);
   }
 
   createLead(lead: CreateLeadRequest): Observable<any> {
@@ -37,16 +37,16 @@ export class CrmService extends BaseApiService {
   }
 
   updateLead(id: string, lead: UpdateLeadRequest): Observable<any> {
-    return this.put<any>(`crm/leads/${id}`, lead);
+    return this.put<any>('crm/leads', id, lead);
   }
 
   deleteLead(id: string): Observable<any> {
-    return this.delete<any>(`crm/leads/${id}`);
+    return this.delete<any>('crm/leads', id);
   }
 
   // Lead Status Management
   updateLeadStatus(id: string, status: UpdateLeadStatusRequest): Observable<any> {
-    return this.patch<any>(`crm/leads/${id}/status`, status);
+    return this.patch<any>('crm/leads', `${id}/status`, status);
   }
 
   convertLead(id: string, conversionData: ConvertLeadRequest): Observable<any> {

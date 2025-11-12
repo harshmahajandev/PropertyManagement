@@ -1,7 +1,7 @@
-/* Import Bootstrap and Font Awesome (added via angular.json) */
-@import 'node_modules/bootstrap/dist/css/bootstrap.min.css';
-@import 'node_modules/@fortawesome/fontawesome-free/css/all.min.css';
-@import 'node_modules/ngx-toastr/toastr.css';
+/* Import Bootstrap and Font Awesome - Using proper Angular 18 imports */
+@import 'bootstrap/scss/bootstrap';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+@import 'ngx-toastr/toastr';
 
 /* Global Styles */
 * {

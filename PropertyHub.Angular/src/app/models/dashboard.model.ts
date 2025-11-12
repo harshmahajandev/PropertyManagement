@@ -1,4 +1,5 @@
 // Dashboard Models
+import { TopPropertyDto } from './property.model';
 export interface DashboardSummaryDto {
   propertyStats: PropertyStatsDto;
   leadStats: LeadStatsDto;

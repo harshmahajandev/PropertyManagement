@@ -17,7 +17,7 @@ import {
 })
 export class DashboardService extends BaseApiService {
 
-  constructor(protected http: HttpClient) {
+  constructor(protected override http: HttpClient) {
     super(http);
   }
 

@@ -1,4 +1,5 @@
 // Customer Portal Models
+import { Property, PropertyRecommendationDto } from './property.model';
 export interface CustomerRegistrationDto {
   email: string;
   fullName: string;

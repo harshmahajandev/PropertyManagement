@@ -17,7 +17,7 @@ import {
 })
 export class PropertyService extends BaseApiService {
 
-  constructor(protected http: HttpClient) {
+  constructor(protected override http: HttpClient) {
     super(http);
   }
 
@@ -28,7 +28,7 @@ export class PropertyService extends BaseApiService {
 
   getPropertyById(id: string, incrementView: boolean = true): Observable<Property> {
     const params = incrementView ? `?incrementView=true` : '';
-    return this.getById<Property>(`properties/${id}${params}`);
+    return this.getById<Property>('properties', `${id}${params}`);
   }
 
   createProperty(property: CreatePropertyRequest): Observable<any> {
@@ -36,11 +36,11 @@ export class PropertyService extends BaseApiService {
   }
 
   updateProperty(id: string, property: UpdatePropertyRequest): Observable<any> {
-    return this.put<any>(`properties/${id}`, property);
+    return this.put<any>('properties', id, property);
   }
 
   deleteProperty(id: string): Observable<any> {
-    return this.delete<any>(`properties/${id}`);
+    return this.delete<any>('properties', id);
   }
 
   // Search and Discovery
