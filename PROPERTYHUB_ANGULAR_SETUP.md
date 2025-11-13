@@ -68,7 +68,7 @@ npm install
 *(This will install all required packages including Bootstrap, Font Awesome, ngx-toastr, etc.)*
 
 ### Step 3: Configure API Connection
-The application is configured to connect to your PropertyHub API at `http://localhost:5000/api`. 
+The application is configured to connect to your PropertyHub API at `http://localhost:53951/api`. 
 
 **To verify/update the API URL**, edit:
 - `src/environments/environment.development.ts` (for development)
@@ -82,7 +82,7 @@ npm start
 The application will be available at: **http://localhost:4200**
 
 ### Step 5: Start Your PropertyHub API
-Make sure your PropertyHub Web API is running on `http://localhost:5000`.
+Make sure your PropertyHub Web API is running on `http://localhost:53951`.
 
 ## 🔗 Key Features You Can Test
 

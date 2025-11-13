@@ -7,7 +7,7 @@ namespace PropertyHub.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    // [Authorize]  // DISABLED - Authentication removed
     public class DashboardController : ControllerBase
     {
         private readonly DashboardService _dashboardService;

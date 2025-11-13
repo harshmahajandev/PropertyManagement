@@ -11,7 +11,8 @@ import {
   CustomerMessageDto,
   CustomerReservationDto,
   CreateCustomerBookingDto,
-  SendCustomerMessageDto
+  SendCustomerMessageDto,
+  CustomerProfileDto
 } from '../models';
 
 @Injectable({
@@ -21,6 +22,15 @@ export class CustomerPortalService extends BaseApiService {
   
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // Authentication
+  register(customerData: any): Observable<CustomerProfileDto> {
+    return this.post<CustomerProfileDto>('customerportal/register', customerData);
+  }
+
+  login(credentials: any): Observable<CustomerProfileDto> {
+    return this.post<CustomerProfileDto>('customerportal/login', credentials);
   }
 
   // Dashboard

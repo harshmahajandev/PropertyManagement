@@ -133,18 +133,18 @@ Lead Match Score = (HNI Leads × 3) + (Investor Leads × 2) + (Retail Leads × 1
 ### Backend Testing
 ```bash
 # Test property listing with filters
-curl -X POST http://localhost:5000/api/properties/list \
+curl -X POST http://localhost:53951/api/properties/list \
   -H "Content-Type: application/json" \
   -d '{"status":"Available","type":"Villa","limit":10,"offset":0}'
 
 # Test property details
-curl http://localhost:5000/api/properties/{property-id}
+curl http://localhost:53951/api/properties/{property-id}
 
 # Test search
-curl "http://localhost:5000/api/properties/search?searchTerm=villa&limit=10"
+curl "http://localhost:53951/api/properties/search?searchTerm=villa&limit=10"
 
 # Test top performers
-curl http://localhost:5000/api/properties/top-performers?count=10
+curl http://localhost:53951/api/properties/top-performers?count=10
 ```
 
 ### Frontend Testing

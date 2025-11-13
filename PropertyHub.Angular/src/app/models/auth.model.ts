@@ -21,20 +21,21 @@ export interface AuthResponse {
 
 export interface CustomerProfileDto {
   id: string;
-  email: string;
   fullName: string;
+  email: string;
   phone?: string;
   nationality?: string;
   company?: string;
   customerRequirements?: string;
   riskLevel: RiskLevel;
-  registrationDate: Date;
-  lastLoginDate?: Date;
-  totalBookings: number;
+  conversionDate?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
   totalReservations: number;
-  totalSpent: number;
-  preferredCurrency: string;
-  isActive: boolean;
+  activeReservations: number;
+  totalBookings: number;
+  unreadMessages: number;
+  savedProperties: number;
 }
 
 export enum RiskLevel {

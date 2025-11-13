@@ -1,18 +1,24 @@
-// Customer Portal Models
+// Customer Portal Models - Matching API DTOs
 import { Property, PropertyRecommendationDto } from './property.model';
+
 export interface CustomerRegistrationDto {
-  email: string;
   fullName: string;
-  phone?: string;
+  email: string;
+  phone: string;
   nationality?: string;
-  budgetRange?: string;
-  propertyTypePreferences?: string[];
-  locationPreferences?: string[];
+  company?: string;
+  customerRequirements?: string;
+  propertyTypes?: string[];
+  locations?: string[];
+  budgetMin?: number;
+  budgetMax?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  timeline?: string;
 }
 
 export interface CustomerLoginDto {
   email: string;
-  password: string;
 }
 
 export interface UpdateCustomerProfileDto {
@@ -24,19 +30,26 @@ export interface UpdateCustomerProfileDto {
 }
 
 export interface CustomerDashboardDto {
-  customerId: string;
-  fullName: string;
-  totalBookings: number;
-  totalReservations: number;
-  totalSpent: number;
-  preferredCurrency: string;
+  profile: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    nationality?: string;
+    company?: string;
+    customerRequirements?: string;
+    riskLevel: string;
+    totalReservations: number;
+    activeReservations: number;
+    totalBookings: number;
+    unreadMessages: number;
+    savedProperties: number;
+  };
+  preferences: CustomerPreferencesDto;
+  recommendedProperties: PropertyRecommendationDto[];
   recentBookings: CustomerBookingDto[];
   recentMessages: CustomerMessageDto[];
-  upcomingViewings: CustomerBookingDto[];
-  favoriteProperties: Property[];
-  recommendations: PropertyRecommendationDto[];
-  lastLoginDate: Date;
-  accountStatus: string;
+  statistics: CustomerStatisticsDto;
 }
 
 export interface CustomerStatisticsDto {

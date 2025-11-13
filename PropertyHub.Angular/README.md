@@ -107,7 +107,7 @@ src/
 
 2. **Configure Environment**
    - Update `src/environments/environment.development.ts` with your API URL
-   - Default API URL: `http://localhost:5000/api`
+   - Default API URL: `http://localhost:53951/api`
 
 3. **Start Development Server**
    ```bash
@@ -126,7 +126,7 @@ src/
 ### Connected to PropertyHub Web API
 The Angular application is designed to work with the existing PropertyHub API:
 
-- **Base URL**: `http://localhost:5000/api` (configurable)
+- **Base URL**: `http://localhost:53951/api` (configurable)
 - **Authentication**: JWT Bearer tokens
 - **CORS**: Configured proxy for development
 - **Error Handling**: Global error interceptor with toast notifications
@@ -166,7 +166,7 @@ Update `src/environments/environment.development.ts`:
 ```typescript
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000/api',
+  apiUrl: 'http://localhost:53951/api',
   // ... other settings
 };
 ```

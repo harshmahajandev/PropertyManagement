@@ -28,18 +28,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// ===== AUTHENTICATION DISABLED =====
 // Identity Configuration
-builder.Services.AddDefaultIdentity<IdentityUser>(options => 
-{
-    options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequiredLength = 8;
-})
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+// builder.Services.AddDefaultIdentity<IdentityUser>(options => 
+// {
+//     options.SignIn.RequireConfirmedAccount = false;
+//     options.Password.RequireDigit = true;
+//     options.Password.RequireLowercase = true;
+//     options.Password.RequireUppercase = true;
+//     options.Password.RequireNonAlphanumeric = true;
+//     options.Password.RequiredLength = 8;
+// })
+//     .AddRoles<IdentityRole>()
+//     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // Register repositories and services
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -112,27 +113,10 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowCredentials();
     });
-    
-    // Development policy for debugging
-    options.AddPolicy("Development", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
 });
 
-// Add Authentication
-builder.Services.AddAuthentication(options =>
-{
-    // Don't redirect for CORS preflight requests
-    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-})
-.AddIdentityCookies();
-
-builder.Services.AddAuthorization();
+// ===== AUTHORIZATION DISABLED =====
+// builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -152,7 +136,8 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// ===== HTTPS REDIRECTION DISABLED FOR DEVELOPMENT =====
+// app.UseHttpsRedirection();  // Disabled - causes CORS issues with Angular
 app.UseStaticFiles();
 
 app.UseSerilogRequestLogging();
@@ -161,70 +146,11 @@ app.UseSerilogRequestLogging();
 app.UseRouting();
 app.UseCors("AllowAngular");
 
-app.UseAuthentication();
-app.UseAuthorization();
+// ===== AUTHENTICATION/AUTHORIZATION MIDDLEWARE DISABLED =====
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed database on startup
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    
-    try
-    {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        
-        // Apply migrations - with error handling for existing tables
-        try
-        {
-            await context.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied successfully");
-        }
-        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P07")
-        {
-            // Table already exists - this is okay, just log it
-            logger.LogWarning("Some database objects already exist. Continuing with existing schema. Error: {Message}", ex.Message);
-        }
-        
-        // Seed roles
-        var roles = new[] { "Admin", "Manager", "SalesAgent", "SalesManager", "ProjectManager", "Inspector", "Accountant", "Customer", "Executive" };
-        foreach (var role in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-            {
-                await roleManager.CreateAsync(new IdentityRole(role));
-            }
-        }
-        
-        // Create default admin user
-        var adminEmail = "admin@propertyhub.com";
-        if (await userManager.FindByEmailAsync(adminEmail) == null)
-        {
-            var admin = new IdentityUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true
-            };
-            
-            var result = await userManager.CreateAsync(admin, "Admin@123456");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(admin, "Admin");
-                Log.Information("Default admin user created successfully");
-            }
-        }
-        
-        Log.Information("Database seeding completed successfully");
-    }
-    catch (Exception ex)
-    {
-        Log.Error(ex, "An error occurred while seeding the database");
-    }
-}
 
 app.Run();

@@ -170,21 +170,21 @@ Conversion Rate = (Converted Leads / Total Leads) × 100
 ### Backend Testing
 ```bash
 # Test lead listing with filters
-curl -X POST http://localhost:5000/api/crm/leads/list \
+curl -X POST http://localhost:53951/api/crm/leads/list \
   -H "Content-Type: application/json" \
   -d '{"status":"New","buyerType":"HNI","limit":10,"offset":0}'
 
 # Test lead details
-curl http://localhost:5000/api/crm/leads/{lead-id}
+curl http://localhost:53951/api/crm/leads/{lead-id}
 
 # Test pipeline statistics
-curl http://localhost:5000/api/crm/pipeline/stats
+curl http://localhost:53951/api/crm/pipeline/stats
 
 # Test top leads
-curl http://localhost:5000/api/crm/leads/top?count=10
+curl http://localhost:53951/api/crm/leads/top?count=10
 
 # Test conversion stats
-curl http://localhost:5000/api/crm/stats/conversion
+curl http://localhost:53951/api/crm/stats/conversion
 ```
 
 ### Frontend Testing

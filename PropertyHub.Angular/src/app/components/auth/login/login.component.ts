@@ -123,8 +123,8 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
                   <i class="fas fa-info-circle me-2"></i>Demo Credentials
                 </h6>
                 <p class="card-text small mb-2">
-                  <strong>Email:</strong> demo@propertyhub.com<br>
-                  <strong>Password:</strong> demo123
+                  <strong>Email:</strong> <br>
+                  <strong>Password:</strong> 
                 </p>
                 <button class="btn btn-sm btn-outline-warning" (click)="fillDemoCredentials()">
                   <i class="fas fa-magic me-1"></i>Fill Demo Data

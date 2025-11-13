@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000/api',
+  apiUrl: 'http://localhost:53951/api',
   appName: 'PropertyHub Angular',
   version: '1.0.0',
   jwtTokenKey: 'PropertyHubAuthToken',

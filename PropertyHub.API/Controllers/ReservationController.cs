@@ -9,7 +9,7 @@ namespace PropertyHub.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+// [Authorize]  // DISABLED - Authentication removed
 public class ReservationController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
