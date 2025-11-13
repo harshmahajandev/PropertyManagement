@@ -105,16 +105,33 @@ builder.Services.AddSwaggerGen(c =>
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+    
+    // Development policy for debugging
+    options.AddPolicy("Development", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
 // Add Authentication
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(options =>
+{
+    // Don't redirect for CORS preflight requests
+    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+})
+.AddIdentityCookies();
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -140,9 +157,9 @@ app.UseStaticFiles();
 
 app.UseSerilogRequestLogging();
 
+// IMPORTANT: Apply CORS BEFORE authentication to prevent redirects
 app.UseRouting();
-
-app.UseCors("AllowAll");
+app.UseCors("AllowAngular");
 
 app.UseAuthentication();
 app.UseAuthorization();
