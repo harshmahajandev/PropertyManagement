@@ -226,23 +226,23 @@ import { Property, PropertyFilterOptions, PropertyListResponse, PropertyType, Pr
               <span class="text-muted small">Active filters:</span>
               <span class="badge bg-primary" *ngIf="filters.searchTerm">
                 Search: "{{ filters.searchTerm }}"
-                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.searchTerm = ''; applyFilters()"></i>
+                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.searchTerm = undefined; applyFilters()"></i>
               </span>
               <span class="badge bg-info" *ngIf="filters.type">
                 Type: {{ filters.type }}
-                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.type = ''; applyFilters()"></i>
+                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.type = undefined; applyFilters()"></i>
               </span>
               <span class="badge bg-success" *ngIf="filters.status">
                 Status: {{ filters.status }}
-                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.status = ''; applyFilters()"></i>
+                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.status = undefined; applyFilters()"></i>
               </span>
               <span class="badge bg-warning" *ngIf="filters.project">
                 Project: {{ filters.project }}
-                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.project = ''; applyFilters()"></i>
+                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.project = undefined; applyFilters()"></i>
               </span>
               <span class="badge bg-secondary" *ngIf="filters.minPrice || filters.maxPrice">
                 Price: {{ filters.minPrice | currency:filters.currency }} - {{ filters.maxPrice | currency:filters.currency }}
-                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.minPrice = null; filters.maxPrice = null; applyFilters()"></i>
+                <i class="fas fa-times ms-1 cursor-pointer" (click)="filters.minPrice = undefined; filters.maxPrice = undefined; applyFilters()"></i>
               </span>
             </div>
           </div>
