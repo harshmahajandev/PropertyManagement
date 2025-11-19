@@ -189,44 +189,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
 
     private void SeedData(ModelBuilder modelBuilder)
     {
-        // Seed Countries
-        var countries = new[]
-        {
-            new Country { Id = Guid.NewGuid(), CountryCode = "US", CountryName = "United States", Currency = Core.Enums.Currency.USD },
-            new Country { Id = Guid.NewGuid(), CountryCode = "UK", CountryName = "United Kingdom", Currency = Core.Enums.Currency.GBP },
-            new Country { Id = Guid.NewGuid(), CountryCode = "AE", CountryName = "United Arab Emirates", Currency = Core.Enums.Currency.AED },
-            new Country { Id = Guid.NewGuid(), CountryCode = "CA", CountryName = "Canada", Currency = Core.Enums.Currency.CAD },
-            new Country { Id = Guid.NewGuid(), CountryCode = "AU", CountryName = "Australia", Currency = Core.Enums.Currency.AUD },
-            new Country { Id = Guid.NewGuid(), CountryCode = "SG", CountryName = "Singapore", Currency = Core.Enums.Currency.SGD },
-            new Country { Id = Guid.NewGuid(), CountryCode = "JP", CountryName = "Japan", Currency = Core.Enums.Currency.JPY }
-        };
-        
-        modelBuilder.Entity<Country>().HasData(countries);
-
-        // Seed Regions
-        var regions = new[]
-        {
-            new Region { Id = Guid.NewGuid(), RegionName = "Dubai Marina", Country = "UAE" },
-            new Region { Id = Guid.NewGuid(), RegionName = "Downtown Dubai", Country = "UAE" },
-            new Region { Id = Guid.NewGuid(), RegionName = "Jumeirah", Country = "UAE" },
-            new Region { Id = Guid.NewGuid(), RegionName = "Manhattan", Country = "USA" },
-            new Region { Id = Guid.NewGuid(), RegionName = "London City", Country = "UK" }
-        };
-        
-        modelBuilder.Entity<Region>().HasData(regions);
-
-        // Seed Currency Rates
-        var currencyRates = new[]
-        {
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.EUR, ExchangeRate = 0.92m },
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.GBP, ExchangeRate = 0.79m },
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.AED, ExchangeRate = 3.67m },
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.CAD, ExchangeRate = 1.36m },
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.AUD, ExchangeRate = 1.53m },
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.SGD, ExchangeRate = 1.34m },
-            new CurrencyRate { Id = Guid.NewGuid(), FromCurrency = Core.Enums.Currency.USD, ToCurrency = Core.Enums.Currency.JPY, ExchangeRate = 149.50m }
-        };
-        
-        modelBuilder.Entity<CurrencyRate>().HasData(currencyRates);
+        // Use comprehensive seed data
+        modelBuilder.SeedComprehensiveData();
     }
 }

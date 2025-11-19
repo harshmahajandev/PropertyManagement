@@ -28,19 +28,31 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// ===== AUTHENTICATION DISABLED =====
-// Identity Configuration
-// builder.Services.AddDefaultIdentity<IdentityUser>(options => 
-// {
-//     options.SignIn.RequireConfirmedAccount = false;
-//     options.Password.RequireDigit = true;
-//     options.Password.RequireLowercase = true;
-//     options.Password.RequireUppercase = true;
-//     options.Password.RequireNonAlphanumeric = true;
-//     options.Password.RequiredLength = 8;
-// })
-//     .AddRoles<IdentityRole>()
-//     .AddEntityFrameworkStores<ApplicationDbContext>();
+// JWT Authentication Configuration
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var secretKey = builder.Configuration["JWT:SecretKey"] ?? "DefaultSecretKey123456789012345678901234567890";
+    var issuer = builder.Configuration["JWT:Issuer"] ?? "PropertyHubGlobal";
+    var audience = builder.Configuration["JWT:Audience"] ?? "PropertyHubClients";
+
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+            System.Text.Encoding.UTF8.GetBytes(secretKey)),
+        ValidateIssuer = true,
+        ValidIssuer = issuer,
+        ValidateAudience = true,
+        ValidAudience = audience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 // Register repositories and services
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -115,8 +127,13 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ===== AUTHORIZATION DISABLED =====
-// builder.Services.AddAuthorization();
+// Authorization Configuration
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("AllUsers", policy => policy.RequireAuthenticatedUser());
+});
 
 var app = builder.Build();
 
@@ -146,9 +163,9 @@ app.UseSerilogRequestLogging();
 app.UseRouting();
 app.UseCors("AllowAngular");
 
-// ===== AUTHENTICATION/AUTHORIZATION MIDDLEWARE DISABLED =====
-// app.UseAuthentication();
-// app.UseAuthorization();
+// Authentication and Authorization Middleware (ENABLED)
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
