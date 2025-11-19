@@ -83,4 +83,30 @@ export class CrmService extends BaseApiService {
   searchLeads(searchTerm: string, limit: number = 20, offset: number = 0): Observable<LeadListResponse> {
     return this.get<LeadListResponse>(`crm/leads/search?searchTerm=${searchTerm}&limit=${limit}&offset=${offset}`);
   }
+
+  // Lead Activities (Mock implementation - add real API endpoint if needed)
+  getLeadActivities(leadId: string): Observable<any[]> {
+    // For now, return empty array - implement when backend endpoint is ready
+    return this.get<any[]>(`crm/leads/${leadId}/activities`);
+  }
+
+  // Lead Assignment (Mock implementation - add real API endpoint if needed)
+  assignLead(leadId: string, assignedTo: string, notes?: string): Observable<any> {
+    return this.post<any>(`crm/leads/${leadId}/assign`, { assignedTo, notes });
+  }
+
+  // Schedule Follow-up (Mock implementation - add real API endpoint if needed)
+  scheduleFollowUp(leadId: string, followUpDate: Date, notes?: string): Observable<any> {
+    return this.post<any>(`crm/leads/${leadId}/follow-up`, { followUpDate, notes });
+  }
+
+  // Lead Source Analytics (Mock implementation - add real API endpoint if needed)
+  getLeadSources(): Observable<any[]> {
+    return this.get<any[]>('crm/sources');
+  }
+
+  // Conversion Analytics
+  getConversionAnalytics(): Observable<any> {
+    return this.get<any>('crm/analytics');
+  }
 }

@@ -170,3 +170,74 @@ export interface ConvertLeadRequest {
   requirements?: string;
   riskLevel?: string;
 }
+
+// Lead Activity Tracking
+export interface LeadActivity {
+  id: string;
+  leadId: string;
+  activityType: string;
+  description: string;
+  performedBy?: string;
+  performedAt: Date;
+  notes?: string;
+}
+
+export interface AssignLeadRequest {
+  assignedTo: string;
+  notes?: string;
+}
+
+export interface FollowUpRequest {
+  followUpDate: Date;
+  notes?: string;
+  reminderEnabled?: boolean;
+}
+
+// Lead Source Analytics
+export interface LeadSourceDto {
+  source: string;
+  count: number;
+  averageScore: number;
+  conversionRate: number;
+  totalValue: number;
+}
+
+// Conversion Analytics
+export interface ConversionAnalyticsDto {
+  totalLeads: number;
+  convertedLeads: number;
+  lostLeads: number;
+  activeLeads: number;
+  conversionRate: number;
+  lossRate: number;
+  averageDaysToConversion?: number;
+}
+
+// Pipeline Stage for Kanban View
+export interface PipelineStage {
+  status: LeadStatus;
+  title: string;
+  leads: Lead[];
+  totalValue: number;
+  count: number;
+  color: string;
+}
+
+// Lead Summary for Cards
+export interface LeadSummary {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  score: number;
+  status: LeadStatus;
+  source: string;
+  budget?: number;
+  budgetMax?: number;
+  timeline: Timeline;
+  buyerType: BuyerType;
+  assignedToName?: string;
+  lastContactDate?: Date;
+  nextFollowUpDate?: Date;
+  createdAt: Date;
+}

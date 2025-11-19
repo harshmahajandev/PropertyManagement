@@ -573,7 +573,7 @@ export class CustomerBookingsComponent implements OnInit, OnDestroy {
   };
   
   // Forms
-  newBookingForm: FormGroup;
+  newBookingForm!: FormGroup;
 
   constructor(
     private customerPortalService: CustomerPortalService,

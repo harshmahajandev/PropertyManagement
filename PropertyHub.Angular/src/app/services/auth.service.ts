@@ -65,7 +65,17 @@ export class AuthService extends BaseApiService {
           fullName: response.user.fullName,
           phone: response.user.phone || '',
           nationality: response.user.nationality,
-          company: response.user.company
+          company: response.user.company,
+          customerRequirements: '',
+          riskLevel: 'Low' as any,
+          conversionDate: undefined,
+          createdAt: new Date(),
+          updatedAt: undefined,
+          totalReservations: 0,
+          activeReservations: 0,
+          totalBookings: 0,
+          unreadMessages: 0,
+          savedProperties: 0
         };
         
         this.setProfile(profile);
@@ -99,7 +109,17 @@ export class AuthService extends BaseApiService {
           fullName: response.user.fullName,
           phone: response.user.phone || '',
           nationality: response.user.nationality,
-          company: response.user.company
+          company: response.user.company,
+          customerRequirements: '',
+          riskLevel: 'Low' as any,
+          conversionDate: undefined,
+          createdAt: new Date(),
+          updatedAt: undefined,
+          totalReservations: 0,
+          activeReservations: 0,
+          totalBookings: 0,
+          unreadMessages: 0,
+          savedProperties: 0
         };
         
         this.setProfile(profile);
@@ -182,7 +202,17 @@ export class AuthService extends BaseApiService {
           fullName: response.user.fullName,
           phone: response.user.phone || '',
           nationality: response.user.nationality,
-          company: response.user.company
+          company: response.user.company,
+          customerRequirements: '',
+          riskLevel: 'Low' as any,
+          conversionDate: undefined,
+          createdAt: new Date(),
+          updatedAt: undefined,
+          totalReservations: 0,
+          activeReservations: 0,
+          totalBookings: 0,
+          unreadMessages: 0,
+          savedProperties: 0
         };
         
         this.setProfile(profile);

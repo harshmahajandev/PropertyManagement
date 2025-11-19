@@ -1,0 +1,703 @@
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-2">CRM Dashboard</h2>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a routerLink="/admin">Admin</a></li>
+              <li class="breadcrumb-item active" aria-current="page">CRM Dashboard</li>
+            </ol>
+          </nav>
+        </div>
+        <div>
+          <button class="btn btn-primary me-2" (click)="openCreateModal()">
+            <i class="fas fa-plus"></i> New Lead
+          </button>
+          <div class="btn-group" role="group">
+            <button class="btn btn-outline-secondary" 
+                    [class.active]="currentView === 'dashboard'"
+                    (click)="switchView('dashboard')">Dashboard</button>
+            <button class="btn btn-outline-secondary" 
+                    [class.active]="currentView === 'pipeline'"
+                    (click)="switchView('pipeline')">Pipeline</button>
+            <button class="btn btn-outline-secondary" 
+                    [class.active]="currentView === 'list'"
+                    (click)="switchView('list')">List</button>
+            <button class="btn btn-outline-secondary" 
+                    [class.active]="currentView === 'analytics'"
+                    (click)="switchView('analytics')">Analytics</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Dashboard View -->
+  <div *ngIf="currentView === 'dashboard' && !isLoading">
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Total Leads</h6>
+                <h3>{{ totalLeads }}</h3>
+              </div>
+              <i class="fas fa-users fa-2x opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Hot Leads</h6>
+                <h3>{{ getLeadsByScore('Hot').length }}</h3>
+              </div>
+              <i class="fas fa-fire fa-2x opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">This Month</h6>
+                <h3>{{ getRecentLeads().length }}</h3>
+              </div>
+              <i class="fas fa-calendar fa-2x opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Converted</h6>
+                <h3>{{ getLeadsByStatus('Converted').length }}</h3>
+              </div>
+              <i class="fas fa-check-circle fa-2x opacity-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Recent Leads</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let lead of getRecentLeads()">
+                    <td>{{ lead.firstName }} {{ lead.lastName }}</td>
+                    <td>{{ lead.email }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusBadgeClass(lead.status)">
+                        {{ lead.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getScoreBadgeClass(lead.score)">
+                        {{ lead.score }}
+                      </span>
+                    </td>
+                    <td>{{ formatDate(lead.createdAt) }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary me-1" 
+                              (click)="openViewModal(lead)">View</button>
+                      <button class="btn btn-sm btn-outline-secondary" 
+                              (click)="openEditModal(lead)">Edit</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Pipeline Overview</h5>
+          </div>
+          <div class="card-body">
+            <div *ngFor="let stage of pipelineStages" class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span>{{ stage.title }}</span>
+                <span class="badge bg-secondary">{{ stage.count }}</span>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar" 
+                     [style.width.%]="(stage.count / totalLeads) * 100">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline View -->
+  <div *ngIf="currentView === 'pipeline' && !isLoading" class="pipeline-view">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex overflow-auto pb-3" style="min-height: 500px;">
+          <div *ngFor="let stage of pipelineStages" 
+               class="pipeline-stage me-3 flex-shrink-0" 
+               style="min-width: 300px;">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">{{ stage.title }}</h6>
+                <span class="badge bg-primary">{{ stage.count }}</span>
+              </div>
+              <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div *ngFor="let lead of getLeadsByStatus(stage.status)" 
+                     class="card mb-2 lead-card">
+                  <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <strong>{{ lead.firstName }} {{ lead.lastName }}</strong>
+                      <span class="badge" [ngClass]="getScoreBadgeClass(lead.score)">
+                        {{ lead.score }}
+                      </span>
+                    </div>
+                    <p class="text-muted mb-1 small">{{ lead.email }}</p>
+                    <p class="text-muted mb-2 small">{{ lead.phone }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <small class="text-muted">{{ formatDate(lead.createdAt) }}</small>
+                      <div>
+                        <button class="btn btn-sm btn-outline-primary me-1" 
+                                (click)="openViewModal(lead)">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                (click)="openEditModal(lead)">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="getLeadsByStatus(stage.status).length === 0" 
+                     class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x mb-2"></i>
+                  <p>No leads in this stage</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div *ngIf="currentView === 'list' && !isLoading">
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" [(ngModel)]="filters.status" (change)="applyFilters()">
+                  <option value="">All Statuses</option>
+                  <option value="New">New</option>
+                  <option value="Contacted">Contacted</option>
+                  <option value="Qualified">Qualified</option>
+                  <option value="Proposal">Proposal</option>
+                  <option value="Negotiation">Negotiation</option>
+                  <option value="Converted">Converted</option>
+                  <option value="Lost">Lost</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Source</label>
+                <select class="form-select" [(ngModel)]="filters.source" (change)="applyFilters()">
+                  <option value="">All Sources</option>
+                  <option value="Website">Website</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Social Media">Social Media</option>
+                  <option value="Advertisement">Advertisement</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" 
+                       [(ngModel)]="searchTerm" 
+                       (input)="applyFilters()" 
+                       placeholder="Search leads...">
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <button class="btn btn-outline-secondary" (click)="resetFilters()">
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leads Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Leads ({{ totalLeads }})</h5>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary me-2" 
+                      [disabled]="selectedLeads.length === 0"
+                      (click)="bulkAssign()">
+                <i class="fas fa-user-plus"></i> Bulk Assign
+              </button>
+              <button class="btn btn-sm btn-outline-danger" 
+                      [disabled]="selectedLeads.length === 0"
+                      (click)="bulkDelete()">
+                <i class="fas fa-trash"></i> Bulk Delete
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>
+                      <input type="checkbox" 
+                             [checked]="isAllSelected()" 
+                             (change)="toggleSelectAll($event)">
+                    </th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Source</th>
+                    <th>Score</th>
+                    <th>Budget</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let lead of leads">
+                    <td>
+                      <input type="checkbox" 
+                             [checked]="isSelected(lead.id)" 
+                             (change)="toggleLeadSelection(lead.id, $event)">
+                    </td>
+                    <td>
+                      <div>
+                        <strong>{{ lead.firstName }} {{ lead.lastName }}</strong>
+                        <br>
+                        <small class="text-muted">{{ lead.buyerType }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        {{ lead.email }}
+                        <br>
+                        <small class="text-muted">{{ lead.phone }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusBadgeClass(lead.status)">
+                        {{ lead.status }}
+                      </span>
+                    </td>
+                    <td>{{ lead.source }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getScoreBadgeClass(lead.score)">
+                        {{ lead.score }}
+                      </span>
+                    </td>
+                    <td>${{ lead.budget | number }}</td>
+                    <td>{{ formatDate(lead.createdAt) }}</td>
+                    <td>
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                data-bs-toggle="dropdown">
+                          Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li><a class="dropdown-item" (click)="openViewModal(lead)">
+                            <i class="fas fa-eye me-2"></i>View Details</a></li>
+                          <li><a class="dropdown-item" (click)="openEditModal(lead)">
+                            <i class="fas fa-edit me-2"></i>Edit Lead</a></li>
+                          <li><a class="dropdown-item" (click)="openAssignModal(lead)">
+                            <i class="fas fa-user-plus me-2"></i>Assign Agent</a></li>
+                          <li><a class="dropdown-item" (click)="openFollowUpModal(lead)">
+                            <i class="fas fa-clock me-2"></i>Schedule Follow-up</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item text-danger" (click)="deleteLead(lead)">
+                            <i class="fas fa-trash me-2"></i>Delete Lead</a></li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row mt-4" *ngIf="totalPages > 1">
+      <div class="col-12">
+        <nav aria-label="Leads pagination">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="changePage(currentPage - 1)">Previous</a>
+            </li>
+            <li *ngFor="let page of getPageNumbers()" 
+                class="page-item" 
+                [class.active]="page === currentPage">
+              <a class="page-link" (click)="changePage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="changePage(currentPage + 1)">Next</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics View -->
+  <div *ngIf="currentView === 'analytics' && !isLoading">
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Lead Sources</h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-placeholder text-center py-4">
+              <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+              <p class="text-muted">Lead Source Distribution Chart</p>
+              <small class="text-muted">Chart integration placeholder</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Conversion Funnel</h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-placeholder text-center py-4">
+              <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+              <p class="text-muted">Conversion Funnel Chart</p>
+              <small class="text-muted">Chart integration placeholder</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Lead Score Distribution</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="text-center">
+                  <h3 class="text-success">{{ getLeadsByScore('Hot').length }}</h3>
+                  <p>Hot Leads (80-100)</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center">
+                  <h3 class="text-warning">{{ getLeadsByScore('Warm').length }}</h3>
+                  <p>Warm Leads (50-79)</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center">
+                  <h3 class="text-info">{{ getLeadsByScore('Cold').length }}</h3>
+                  <p>Cold Leads (0-49)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Lead Modal -->
+<div class="modal fade" id="leadModal" tabindex="-1" aria-labelledby="leadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="leadModalLabel">
+          {{ editingLead ? 'Edit Lead' : 'Create New Lead' }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="leadForm" (ngSubmit)="saveLead()">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">First Name *</label>
+              <input type="text" class="form-control" formControlName="firstName">
+              <div class="invalid-feedback" 
+                   *ngIf="leadForm.get('firstName')?.invalid && leadForm.get('firstName')?.touched">
+                First name is required
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Name *</label>
+              <input type="text" class="form-control" formControlName="lastName">
+              <div class="invalid-feedback" 
+                   *ngIf="leadForm.get('lastName')?.invalid && leadForm.get('lastName')?.touched">
+                Last name is required
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-control" formControlName="email">
+              <div class="invalid-feedback" 
+                   *ngIf="leadForm.get('email')?.invalid && leadForm.get('email')?.touched">
+                Valid email is required
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              <input type="text" class="form-control" formControlName="phone">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Source</label>
+              <select class="form-select" formControlName="source">
+                <option value="Website">Website</option>
+                <option value="Referral">Referral</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Advertisement">Advertisement</option>
+                <option value="Walk-in">Walk-in</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Buyer Type</label>
+              <select class="form-select" formControlName="buyerType">
+                <option value="Individual">Individual</option>
+                <option value="Investor">Investor</option>
+                <option value="Corporate">Corporate</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Budget</label>
+              <input type="number" class="form-control" formControlName="budget">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <select class="form-select" formControlName="status">
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Proposal">Proposal</option>
+                <option value="Negotiation">Negotiation</option>
+                <option value="Converted">Converted</option>
+                <option value="Lost">Lost</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea class="form-control" rows="3" formControlName="notes"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="leadForm.invalid || isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            {{ editingLead ? 'Update' : 'Create' }} Lead
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Lead Modal -->
+<div class="modal fade" id="viewLeadModal" tabindex="-1" aria-labelledby="viewLeadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewLeadModalLabel">Lead Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedLead">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Name</label>
+            <p>{{ selectedLead.firstName }} {{ selectedLead.lastName }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Email</label>
+            <p>{{ selectedLead.email }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Phone</label>
+            <p>{{ selectedLead.phone || 'N/A' }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Source</label>
+            <p>{{ selectedLead.source }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Status</label>
+            <p>
+              <span class="badge" [ngClass]="getStatusBadgeClass(selectedLead.status)">
+                {{ selectedLead.status }}
+              </span>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">AI Score</label>
+            <p>
+              <span class="badge" [ngClass]="getScoreBadgeClass(selectedLead.score)">
+                {{ selectedLead.score }}
+              </span>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Budget</label>
+            <p>${{ selectedLead.budget | number }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Buyer Type</label>
+            <p>{{ selectedLead.buyerType }}</p>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold">Notes</label>
+            <p>{{ selectedLead.notes || 'No notes available' }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Created</label>
+            <p>{{ formatDate(selectedLead.createdAt) }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Last Updated</label>
+            <p>{{ formatDate(selectedLead.updatedAt) }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" (click)="openEditModal(selectedLead!)">
+          Edit Lead
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Follow-up Modal -->
+<div class="modal fade" id="followUpModal" tabindex="-1" aria-labelledby="followUpModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="followUpModalLabel">Schedule Follow-up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="followUpForm" (ngSubmit)="scheduleFollowUp()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Follow-up Date & Time *</label>
+            <input type="datetime-local" class="form-control" formControlName="followUpDate">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" rows="3" formControlName="notes" 
+                      placeholder="Add notes for the follow-up..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="followUpForm.invalid || isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Schedule Follow-up
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Assignment Modal -->
+<div class="modal fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="assignmentModalLabel">Assign Lead</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="assignmentForm" (ngSubmit)="assignLead()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Assign to Agent *</label>
+            <select class="form-select" formControlName="agentId">
+              <option value="">Select an agent...</option>
+              <option *ngFor="let agent of agents" [value]="agent.id">
+                {{ agent.fullName }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assignment Notes</label>
+            <textarea class="form-control" rows="3" formControlName="notes" 
+                      placeholder="Add notes for the assigned agent..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="assignmentForm.invalid || isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Assign Lead
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

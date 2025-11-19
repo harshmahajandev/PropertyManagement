@@ -207,7 +207,7 @@ import {
                           <div class="form-check">
                             <input class="form-check-input" type="checkbox" [id]="'type-' + type" 
                                    [checked]="preferencesForm.get('propertyTypes')?.value?.includes(type)"
-                                   (change)="togglePropertyType(type, $event.target.checked)">
+                                   (change)="togglePropertyType(type, $event)">
                             <label class="form-check-label" [for]="'type-' + type">
                               {{ type }}
                             </label>
@@ -281,7 +281,7 @@ import {
                           <div class="form-check">
                             <input class="form-check-input" type="checkbox" [id]="'location-' + location" 
                                    [checked]="preferencesForm.get('locations')?.value?.includes(location)"
-                                   (change)="toggleLocation(location, $event.target.checked)">
+                                   (change)="toggleLocation(location, $event)">
                             <label class="form-check-label" [for]="'location-' + location">
                               {{ location }}
                             </label>
@@ -300,7 +300,7 @@ import {
                           <div class="form-check">
                             <input class="form-check-input" type="checkbox" [id]="'amenity-' + amenity" 
                                    [checked]="preferencesForm.get('amenities')?.value?.includes(amenity)"
-                                   (change)="toggleAmenity(amenity, $event.target.checked)">
+                                   (change)="toggleAmenity(amenity, $event)">
                             <label class="form-check-label" [for]="'amenity-' + amenity">
                               <i class="fas fa-check-circle text-success me-1"></i>{{ amenity }}
                             </label>
@@ -568,10 +568,10 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   error = '';
   
   // Forms
-  profileForm: FormGroup;
-  preferencesForm: FormGroup;
-  requirementsForm: FormGroup;
-  settingsForm: FormGroup;
+  profileForm!: FormGroup;
+  preferencesForm!: FormGroup;
+  requirementsForm!: FormGroup;
+  settingsForm!: FormGroup;
   
   // Data lists
   propertyTypes = ['Apartment', 'Villa', 'Townhouse', 'Penthouse', 'Studio', 'Office', 'Retail'];
@@ -733,9 +733,10 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   }
 
   // Form field toggles
-  togglePropertyType(type: string, checked: boolean): void {
+  togglePropertyType(type: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
     const currentTypes = this.preferencesForm.get('propertyTypes')?.value || [];
-    if (checked) {
+    if (target.checked) {
       this.preferencesForm.patchValue({
         propertyTypes: [...currentTypes, type]
       });
@@ -746,9 +747,10 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleLocation(location: string, checked: boolean): void {
+  toggleLocation(location: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
     const currentLocations = this.preferencesForm.get('locations')?.value || [];
-    if (checked) {
+    if (target.checked) {
       this.preferencesForm.patchValue({
         locations: [...currentLocations, location]
       });
@@ -759,9 +761,10 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleAmenity(amenity: string, checked: boolean): void {
+  toggleAmenity(amenity: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
     const currentAmenities = this.preferencesForm.get('amenities')?.value || [];
-    if (checked) {
+    if (target.checked) {
       this.preferencesForm.patchValue({
         amenities: [...currentAmenities, amenity]
       });

@@ -282,7 +282,7 @@ import {
                         <th width="40">
                           <input type="checkbox" class="form-check-input" 
                                  [checked]="selectedProperties.length === properties.length"
-                                 (change)="toggleSelectAll($event.target.checked)">
+                                 (change)="toggleSelectAll($event)">
                         </th>
                         <th>Property</th>
                         <th>Type</th>
@@ -299,7 +299,7 @@ import {
                         <td>
                           <input type="checkbox" class="form-check-input" 
                                  [checked]="selectedProperties.includes(property.id)"
-                                 (change)="togglePropertySelection(property.id, $event.target.checked)">
+                                 (change)="togglePropertySelection(property.id, $event)">
                         </td>
                         <td>
                           <div class="property-info">
@@ -667,6 +667,9 @@ import {
 export class AdminPropertiesComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
+  // Expose Math for template
+  Math = Math;
+  
   properties: Property[] = [];
   selectedProperties: string[] = [];
   totalProperties = 0;
@@ -692,7 +695,7 @@ export class AdminPropertiesComponent implements OnInit, OnDestroy {
   selectedProperty: Property | null = null;
   
   // Form
-  propertyForm: FormGroup;
+  propertyForm!: FormGroup;
   
   // Enums for templates
   propertyTypes = Object.values(PropertyType);
@@ -746,7 +749,7 @@ export class AdminPropertiesComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadProperties(): void {
+  public loadProperties(): void {
     this.isLoading = true;
     this.isSearching = true;
     this.error = '';
@@ -830,16 +833,18 @@ export class AdminPropertiesComponent implements OnInit, OnDestroy {
     return pages;
   }
 
-  togglePropertySelection(propertyId: string, checked: boolean): void {
-    if (checked) {
+  togglePropertySelection(propertyId: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.checked) {
       this.selectedProperties.push(propertyId);
     } else {
       this.selectedProperties = this.selectedProperties.filter(id => id !== propertyId);
     }
   }
 
-  toggleSelectAll(checked: boolean): void {
-    if (checked) {
+  toggleSelectAll(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.checked) {
       this.selectedProperties = [...this.properties.map(p => p.id)];
     } else {
       this.selectedProperties = [];
