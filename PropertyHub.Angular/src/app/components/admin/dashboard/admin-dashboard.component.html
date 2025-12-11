@@ -1,0 +1,649 @@
+<div class="dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h2 class="mb-1">Admin Analytics Dashboard</h2>
+        <p class="text-muted mb-0">
+          Comprehensive business intelligence and performance metrics
+          <span *ngIf="lastUpdated" class="ms-2 small">
+            <i class="fas fa-clock me-1"></i>Last updated: {{ formatDate(lastUpdated) }}
+          </span>
+        </p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a routerLink="/dashboard" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Customer View
+        </a>
+        <button class="btn btn-outline-primary" (click)="refreshData()" [disabled]="loading">
+          <i class="fas fa-sync-alt me-1" [class.fa-spin]="loading"></i>Refresh
+        </button>
+        <div class="dropdown">
+          <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-download me-1"></i>Export
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" (click)="exportReport('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>Export as PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportReport('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Export as Excel</a></li>
+            <li><a class="dropdown-item" (click)="exportReport('csv')"><i class="fas fa-file-csv me-2 text-info"></i>Export as CSV</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Bar -->
+  <div class="filters-bar">
+    <div class="row g-3 align-items-center">
+      <div class="col-auto">
+        <label class="form-label mb-0 me-2">Currency:</label>
+        <select class="form-select form-select-sm d-inline-block w-auto" [(ngModel)]="selectedCurrency" (change)="onCurrencyChange()">
+          <option *ngFor="let curr of currencies" [value]="curr.code">{{ curr.code }} ({{ curr.symbol }})</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label mb-0 me-2">Period:</label>
+        <select class="form-select form-select-sm d-inline-block w-auto" [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
+          <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
+        </select>
+      </div>
+      <div class="col-auto ms-auto">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="autoRefresh" [checked]="autoRefresh" (change)="toggleAutoRefresh()">
+          <label class="form-check-label" for="autoRefresh">Auto-refresh</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-tabs dashboard-tabs">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeView === 'overview'" (click)="setActiveView('overview')">
+        <i class="fas fa-th-large me-2"></i>Overview
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeView === 'properties'" (click)="setActiveView('properties')">
+        <i class="fas fa-building me-2"></i>Properties
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeView === 'leads'" (click)="setActiveView('leads')">
+        <i class="fas fa-users me-2"></i>Leads
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeView === 'financial'" (click)="setActiveView('financial')">
+        <i class="fas fa-chart-line me-2"></i>Financial
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeView === 'analytics'" (click)="setActiveView('analytics')">
+        <i class="fas fa-chart-pie me-2"></i>Analytics
+      </a>
+    </li>
+  </ul>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-warning m-3">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-sm btn-outline-primary ms-3" (click)="refreshData()">Try Again</button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading" class="dashboard-content">
+    
+    <!-- OVERVIEW VIEW -->
+    <div *ngIf="activeView === 'overview'" class="fade-in">
+      <!-- KPI Cards Row -->
+      <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="kpi-card properties">
+            <div class="kpi-icon">
+              <i class="fas fa-building"></i>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-value">{{ propertyStats?.totalProperties || 0 }}</h3>
+              <p class="kpi-label">Total Properties</p>
+              <span class="kpi-trend positive">
+                <i class="fas fa-arrow-up"></i> {{ propertyStats?.availableProperties || 0 }} available
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="kpi-card leads">
+            <div class="kpi-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-value">{{ leadStats?.totalLeads || 0 }}</h3>
+              <p class="kpi-label">Total Leads</p>
+              <span class="kpi-trend positive">
+                <i class="fas fa-arrow-up"></i> {{ formatPercentage(leadStats?.conversionRate || 0) }} conversion
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="kpi-card reservations">
+            <div class="kpi-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-value">{{ reservationStats?.totalReservations || 0 }}</h3>
+              <p class="kpi-label">Reservations</p>
+              <span class="kpi-trend">
+                <i class="fas fa-check"></i> {{ reservationStats?.confirmedReservations || 0 }} confirmed
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="kpi-card revenue">
+            <div class="kpi-icon">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-value">{{ formatCurrency(financialStats?.totalRevenue || 0, true) }}</h3>
+              <p class="kpi-label">Total Revenue</p>
+              <span class="kpi-trend positive">
+                <i class="fas fa-arrow-up"></i> {{ formatPercentage(financialStats?.monthlyGrowthRate || 0) }} growth
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-building me-2"></i>Property Distribution</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas #propertyChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-funnel-dollar me-2"></i>Lead Funnel</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas #leadFunnelChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Revenue Trend</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas #revenueChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Activities & Top Properties -->
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Activities</h5>
+              <span class="badge bg-primary">{{ recentActivities.length }}</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="activity-list">
+                <div *ngFor="let activity of recentActivities; trackBy: trackByActivityId" class="activity-item">
+                  <div class="activity-icon bg-{{ getActivityColor(activity.type) }}">
+                    <i class="fas {{ getActivityIcon(activity.type) }}"></i>
+                  </div>
+                  <div class="activity-content">
+                    <p class="activity-title mb-0">{{ activity.title }}</p>
+                    <p class="activity-desc text-muted small mb-0">{{ activity.description }}</p>
+                  </div>
+                  <div class="activity-time text-muted small">
+                    {{ formatDate(activity.timestamp) }}
+                  </div>
+                </div>
+                <div *ngIf="recentActivities.length === 0" class="text-center py-4 text-muted">
+                  <i class="fas fa-inbox fa-2x mb-2"></i>
+                  <p class="mb-0">No recent activities</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="fas fa-star me-2"></i>Top Properties</h5>
+              <a routerLink="/admin/properties" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>Property</th>
+                      <th>Price</th>
+                      <th>Views</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let property of topProperties; trackBy: trackByPropertyId">
+                      <td>
+                        <strong>{{ property.title }}</strong>
+                        <br><small class="text-muted">{{ property.projectName }}</small>
+                      </td>
+                      <td>{{ formatCurrency(property.price) }}</td>
+                      <td><i class="fas fa-eye text-muted me-1"></i>{{ formatNumber(property.viewCount) }}</td>
+                      <td><span class="badge {{ getStatusBadgeClass(property.status) }}">{{ property.status }}</span></td>
+                    </tr>
+                    <tr *ngIf="topProperties.length === 0">
+                      <td colspan="4" class="text-center text-muted py-4">No properties found</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPERTIES VIEW -->
+    <div *ngIf="activeView === 'properties'" class="fade-in">
+      <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-primary"><i class="fas fa-building"></i></div>
+            <div class="stat-details">
+              <h4>{{ propertyStats?.totalProperties || 0 }}</h4>
+              <p>Total Properties</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-success"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-details">
+              <h4>{{ propertyStats?.availableProperties || 0 }}</h4>
+              <p>Available</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-warning"><i class="fas fa-clock"></i></div>
+            <div class="stat-details">
+              <h4>{{ propertyStats?.reservedProperties || 0 }}</h4>
+              <p>Reserved</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-info"><i class="fas fa-handshake"></i></div>
+            <div class="stat-details">
+              <h4>{{ propertyStats?.soldProperties || 0 }}</h4>
+              <p>Sold</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Property Status Distribution</h5></div>
+            <div class="card-body">
+              <div class="chart-container-lg">
+                <canvas #propertyChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Property Metrics</h5></div>
+            <div class="card-body">
+              <div class="metrics-grid">
+                <div class="metric-item">
+                  <span class="metric-label">Average Price</span>
+                  <span class="metric-value">{{ formatCurrency(propertyStats?.averagePrice || 0, true) }}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Total Value</span>
+                  <span class="metric-value">{{ formatCurrency(propertyStats?.totalValue || 0, true) }}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Avg Size</span>
+                  <span class="metric-value">{{ formatNumber(propertyStats?.averageSize || 0) }} sqft</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Total Views</span>
+                  <span class="metric-value">{{ formatNumber(propertyStats?.viewCount || 0) }}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Inquiries</span>
+                  <span class="metric-value">{{ formatNumber(propertyStats?.inquiryCount || 0) }}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Tours</span>
+                  <span class="metric-value">{{ formatNumber(propertyStats?.tourCount || 0) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADS VIEW -->
+    <div *ngIf="activeView === 'leads'" class="fade-in">
+      <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-primary"><i class="fas fa-users"></i></div>
+            <div class="stat-details">
+              <h4>{{ leadStats?.totalLeads || 0 }}</h4>
+              <p>Total Leads</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-success"><i class="fas fa-user-check"></i></div>
+            <div class="stat-details">
+              <h4>{{ leadStats?.activeLeads || 0 }}</h4>
+              <p>Active Leads</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-info"><i class="fas fa-handshake"></i></div>
+            <div class="stat-details">
+              <h4>{{ leadStats?.convertedLeads || 0 }}</h4>
+              <p>Converted</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card highlight">
+            <div class="stat-icon bg-warning"><i class="fas fa-percentage"></i></div>
+            <div class="stat-details">
+              <h4>{{ formatPercentage(leadStats?.conversionRate || 0) }}</h4>
+              <p>Conversion Rate</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Lead Conversion Funnel</h5></div>
+            <div class="card-body">
+              <div class="chart-container-lg">
+                <canvas #leadFunnelChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Leads by Segment</h5></div>
+            <div class="card-body">
+              <div class="chart-container-lg">
+                <canvas #leadSegmentChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Lead Performance Metrics</h5></div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="performance-metric">
+                    <div class="pm-icon"><i class="fas fa-star"></i></div>
+                    <div class="pm-content">
+                      <span class="pm-value">{{ leadStats?.averageLeadScore?.toFixed(1) || '0' }}</span>
+                      <span class="pm-label">Avg Lead Score</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="performance-metric">
+                    <div class="pm-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="pm-content">
+                      <span class="pm-value">{{ formatPercentage(leadStats?.growthRate || 0) }}</span>
+                      <span class="pm-label">Growth Rate</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="performance-metric">
+                    <div class="pm-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="pm-content">
+                      <span class="pm-value">{{ leadStats?.leadsThisMonth || 0 }}</span>
+                      <span class="pm-label">Leads This Month</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCIAL VIEW -->
+    <div *ngIf="activeView === 'financial'" class="fade-in">
+      <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card highlight">
+            <div class="stat-icon bg-success"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-details">
+              <h4>{{ formatCurrency(financialStats?.totalRevenue || 0, true) }}</h4>
+              <p>Total Revenue</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-primary"><i class="fas fa-percentage"></i></div>
+            <div class="stat-details">
+              <h4>{{ formatCurrency(financialStats?.totalCommissions || 0, true) }}</h4>
+              <p>Commissions</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-info"><i class="fas fa-calendar-alt"></i></div>
+            <div class="stat-details">
+              <h4>{{ formatCurrency(financialStats?.revenueThisMonth || 0, true) }}</h4>
+              <p>This Month</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-warning"><i class="fas fa-clock"></i></div>
+            <div class="stat-details">
+              <h4>{{ formatCurrency(financialStats?.pendingPayments || 0, true) }}</h4>
+              <p>Pending</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Revenue Trend</h5>
+              <span class="badge bg-success">
+                <i class="fas fa-arrow-up me-1"></i>{{ formatPercentage(financialStats?.monthlyGrowthRate || 0) }} growth
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="chart-container-lg">
+                <canvas #revenueChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">Financial Summary</h5></div>
+            <div class="card-body">
+              <div class="financial-summary">
+                <div class="fs-item">
+                  <span class="fs-label">Average Commission</span>
+                  <span class="fs-value">{{ formatCurrency(financialStats?.averageCommission || 0) }}</span>
+                </div>
+                <div class="fs-item">
+                  <span class="fs-label">Avg Property Price</span>
+                  <span class="fs-value">{{ formatCurrency(financialStats?.averagePropertyPrice || 0, true) }}</span>
+                </div>
+                <div class="fs-item">
+                  <span class="fs-label">Last Month Revenue</span>
+                  <span class="fs-value">{{ formatCurrency(financialStats?.revenueLastMonth || 0, true) }}</span>
+                </div>
+                <div class="fs-item highlight">
+                  <span class="fs-label">Monthly Growth</span>
+                  <span class="fs-value text-success">
+                    <i class="fas fa-arrow-up me-1"></i>{{ formatPercentage(financialStats?.monthlyGrowthRate || 0) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS VIEW -->
+    <div *ngIf="activeView === 'analytics'" class="fade-in">
+      <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Performance Overview</h5></div>
+            <div class="card-body">
+              <div class="chart-container-lg">
+                <canvas #performanceChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Reservations by Status</h5></div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas #reservationStatusChart></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Key Performance Indicators</h5></div>
+            <div class="card-body">
+              <div class="kpi-list">
+                <div class="kpi-list-item">
+                  <div class="kpi-list-icon bg-primary"><i class="fas fa-percentage"></i></div>
+                  <div class="kpi-list-content">
+                    <span class="kpi-list-label">Lead Conversion Rate</span>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-primary" [style.width.%]="leadStats?.conversionRate || 0"></div>
+                    </div>
+                  </div>
+                  <span class="kpi-list-value">{{ formatPercentage(leadStats?.conversionRate || 0) }}</span>
+                </div>
+                <div class="kpi-list-item">
+                  <div class="kpi-list-icon bg-success"><i class="fas fa-calendar-check"></i></div>
+                  <div class="kpi-list-content">
+                    <span class="kpi-list-label">Reservation Confirmation</span>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-success" [style.width.%]="reservationStats?.conversionRate || 0"></div>
+                    </div>
+                  </div>
+                  <span class="kpi-list-value">{{ formatPercentage(reservationStats?.conversionRate || 0) }}</span>
+                </div>
+                <div class="kpi-list-item">
+                  <div class="kpi-list-icon bg-info"><i class="fas fa-chart-line"></i></div>
+                  <div class="kpi-list-content">
+                    <span class="kpi-list-label">Revenue Growth</span>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-info" [style.width.%]="(financialStats?.monthlyGrowthRate || 0) * 3"></div>
+                    </div>
+                  </div>
+                  <span class="kpi-list-value">{{ formatPercentage(financialStats?.monthlyGrowthRate || 0) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Reservation Analytics</h5></div>
+            <div class="card-body">
+              <div class="analytics-grid">
+                <div class="analytics-item">
+                  <span class="analytics-value">{{ reservationStats?.totalReservations || 0 }}</span>
+                  <span class="analytics-label">Total Reservations</span>
+                </div>
+                <div class="analytics-item">
+                  <span class="analytics-value">{{ reservationStats?.confirmedReservations || 0 }}</span>
+                  <span class="analytics-label">Confirmed</span>
+                </div>
+                <div class="analytics-item">
+                  <span class="analytics-value">{{ formatCurrency(reservationStats?.averageReservationValue || 0, true) }}</span>
+                  <span class="analytics-label">Avg Value</span>
+                </div>
+                <div class="analytics-item">
+                  <span class="analytics-value">{{ formatPercentage(reservationStats?.averageDepositPercentage || 0) }}</span>
+                  <span class="analytics-label">Avg Deposit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
