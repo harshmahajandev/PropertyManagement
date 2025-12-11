@@ -11,9 +11,7 @@ import {
   ReservationStatsDto,
   FinancialStatsDto,
   ActivityDto,
-  TopPropertyDto,
-  Currency,
-  PropertyStatus
+  TopPropertyDto
 } from '../../../models';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 
@@ -167,95 +165,19 @@ export class AdminDashboardComponent implements OnInit, OnDestroy, AfterViewInit
       },
       error: (err) => {
         console.error('Failed to load dashboard data:', err);
-        this.error = 'Failed to load dashboard data. Please try again.';
+        this.error = 'Failed to load dashboard data. Please ensure the backend API is running and try again.';
         this.loading = false;
-        this.loadMockData();
+        // Clear any stale data
+        this.propertyStats = null;
+        this.leadStats = null;
+        this.reservationStats = null;
+        this.financialStats = null;
+        this.recentActivities = [];
+        this.topProperties = [];
+        this.leadsBySegment = {};
+        this.reservationsByStatus = {};
       }
     });
-  }
-
-  private loadMockData(): void {
-    // Load mock data for development/demo purposes
-    this.propertyStats = {
-      totalProperties: 156,
-      availableProperties: 89,
-      reservedProperties: 42,
-      soldProperties: 25,
-      averagePrice: 450000,
-      totalValue: 70200000,
-      averageSize: 1850,
-      viewCount: 12500,
-      inquiryCount: 890,
-      tourCount: 234,
-      offerCount: 78
-    };
-    
-    this.leadStats = {
-      totalLeads: 456,
-      activeLeads: 234,
-      convertedLeads: 89,
-      lostLeads: 45,
-      conversionRate: 19.5,
-      averageLeadScore: 72.5,
-      leadsThisMonth: 67,
-      leadsLastMonth: 58,
-      growthRate: 15.5
-    };
-    
-    this.reservationStats = {
-      totalReservations: 198,
-      pendingReservations: 34,
-      confirmedReservations: 112,
-      cancelledReservations: 18,
-      totalValue: 28500000,
-      averageReservationValue: 253968,
-      averageDepositPercentage: 15,
-      conversionRate: 75.5,
-      revenueThisMonth: 4500000,
-      revenueLastMonth: 3800000
-    };
-    
-    this.financialStats = {
-      totalRevenue: 45600000,
-      totalCommissions: 2280000,
-      averageCommission: 45600,
-      revenueThisMonth: 4500000,
-      revenueLastMonth: 3800000,
-      monthlyGrowthRate: 18.4,
-      pendingPayments: 1250000,
-      averagePropertyPrice: 425000,
-      currency: this.selectedCurrency
-    };
-
-    this.leadsBySegment = {
-      'Hot': 45,
-      'Warm': 89,
-      'Cold': 120,
-      'New': 67,
-      'Qualified': 56
-    };
-
-    this.reservationsByStatus = {
-      'Pending': 34,
-      'Confirmed': 112,
-      'Completed': 34,
-      'Cancelled': 18
-    };
-
-    this.recentActivities = [
-      { id: '1', type: 'LeadCreated' as any, title: 'New Lead', description: 'John Smith registered interest in Marina Heights', userId: '1', userName: 'System', entityId: '1', entityType: 'Lead', timestamp: new Date() },
-      { id: '2', type: 'PropertyViewed' as any, title: 'Property Viewed', description: 'Luxury Villa #12 viewed 25 times today', userId: '1', userName: 'System', entityId: '2', entityType: 'Property', timestamp: new Date() },
-      { id: '3', type: 'ReservationConfirmed' as any, title: 'Reservation Confirmed', description: 'Unit 405 reservation confirmed by Sarah Johnson', userId: '1', userName: 'Admin', entityId: '3', entityType: 'Reservation', timestamp: new Date() }
-    ];
-
-    this.topProperties = [
-      { id: '1' as any, title: 'Marina Heights Penthouse', price: 2500000, currency: Currency.USD, viewCount: 450, status: PropertyStatus.Available, projectName: 'Marina Heights' },
-      { id: '2' as any, title: 'Downtown Luxury Suite', price: 1800000, currency: Currency.USD, viewCount: 380, status: PropertyStatus.Reserved, projectName: 'City Center' },
-      { id: '3' as any, title: 'Beachfront Villa', price: 3200000, currency: Currency.USD, viewCount: 320, status: PropertyStatus.Available, projectName: 'Coastal Living' }
-    ];
-
-    this.lastUpdated = new Date();
-    setTimeout(() => this.updateCharts(), 100);
   }
 
   onCurrencyChange(): void {
